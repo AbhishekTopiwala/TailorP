@@ -1,33 +1,33 @@
 import React, { useState } from 'react';
-import { StyleSheet, Text, View, TouchableOpacity, useColorScheme, Dimensions } from 'react-native';
+import { StyleSheet, Text, View, TouchableOpacity, Dimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { Colors } from '@/constants/theme';
 import { useAppStore } from '@/store/AppStore';
+import { MaterialIcons } from '@expo/vector-icons';
 
 const { width } = Dimensions.get('window');
 
 const SLIDES = [
   {
-    emoji: '🧵',
+    icon: 'straighten' as const,
     title: 'Precision Craft',
-    description: 'Digitize your customer measurements, fit records, and style preferences with seamless precision.',
+    description: 'Digitize customer measurements, fit records, and style preferences with seamless precision.',
   },
   {
-    emoji: '📋',
-    title: 'Order Stepper',
+    icon: 'assignment' as const,
+    title: 'Order Tracker',
     description: 'Track orders from fabric receipt through cutting, stitching, and trial to successful delivery.',
   },
   {
-    emoji: '📅',
+    icon: 'event' as const,
     title: 'Smarter Booking',
     description: 'Manage trial sessions and appointments with our integrated real-time schedule planner.',
   },
 ];
 
 export default function OnboardingScreen() {
-  const scheme = useColorScheme();
-  const colors = Colors[scheme === 'dark' ? 'dark' : 'light'];
+  const colors = Colors.light; // Force light theme
   const { completeOnboarding } = useAppStore();
   const [activeSlide, setActiveSlide] = useState(0);
 
@@ -50,14 +50,18 @@ export default function OnboardingScreen() {
             router.replace('/login');
           }}
           activeOpacity={0.7}
+          style={s.skipBtn}
         >
           <Text style={[s.skipTxt, { color: colors.textSecondary }]}>Skip</Text>
+          <MaterialIcons name="chevron-right" size={16} color={colors.textSecondary} />
         </TouchableOpacity>
       </View>
 
       {/* Main Slide Carousel Content */}
       <View style={s.carouselContainer}>
-        <Text style={s.slideEmoji}>{SLIDES[activeSlide].emoji}</Text>
+        <View style={[s.iconBg, { backgroundColor: colors.primary + '08', borderColor: colors.primary + '20' }]}>
+          <MaterialIcons name={SLIDES[activeSlide].icon} size={44} color={colors.primary} />
+        </View>
         <Text style={[s.slideTitle, { color: colors.text }]}>
           {SLIDES[activeSlide].title}
         </Text>
@@ -74,8 +78,8 @@ export default function OnboardingScreen() {
             style={[
               s.indicator,
               {
-                backgroundColor: activeSlide === idx ? colors.primary : colors.border,
-                width: activeSlide === idx ? 20 : 8,
+                backgroundColor: activeSlide === idx ? colors.primary : colors.divider,
+                width: activeSlide === idx ? 24 : 8,
               },
             ]}
           />
@@ -109,9 +113,16 @@ const s = StyleSheet.create({
     alignItems: 'flex-end',
     justifyContent: 'center',
   },
+  skipBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 16,
+  },
   skipTxt: {
-    fontSize: 15,
-    fontWeight: '600',
+    fontSize: 14,
+    fontWeight: '700',
   },
   carouselContainer: {
     flex: 1,
@@ -120,38 +131,42 @@ const s = StyleSheet.create({
     paddingHorizontal: 20,
     marginTop: -20,
   },
-  slideEmoji: {
-    fontSize: 72,
-    marginBottom: 32,
+  iconBg: {
+    width: 90,
+    height: 90,
+    borderRadius: 45,
+    borderWidth: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 40,
   },
   slideTitle: {
-    fontSize: 26,
-    fontWeight: 'bold',
+    fontSize: 28,
+    fontWeight: '800',
     textAlign: 'center',
     marginBottom: 16,
-    fontFamily: 'System',
-    letterSpacing: -0.5,
+    letterSpacing: -0.8,
   },
   slideDesc: {
-    fontSize: 16,
+    fontSize: 15,
     textAlign: 'center',
-    lineHeight: 24,
-    fontFamily: 'System',
+    lineHeight: 22,
+    paddingHorizontal: 10,
   },
   indicatorRow: {
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
     height: 32,
-    marginBottom: 32,
+    marginBottom: 40,
   },
   indicator: {
-    height: 8,
-    borderRadius: 4,
+    height: 6,
+    borderRadius: 3,
     marginHorizontal: 4,
   },
   bottomContainer: {
-    paddingBottom: 24,
+    paddingBottom: 32,
   },
   primaryBtn: {
     height: 52,
@@ -159,11 +174,6 @@ const s = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     width: '100%',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
   },
   primaryBtnTxt: {
     fontSize: 16,

@@ -3,6 +3,7 @@ import { StyleSheet, Text, View, ScrollView, TouchableOpacity, useColorScheme } 
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Colors } from '@/constants/theme';
 import { useAppStore, getBalance, getTotalPaid } from '@/store/AppStore';
+import { MaterialIcons } from '@expo/vector-icons';
 
 type Period = 'Daily' | 'Weekly' | 'Monthly';
 
@@ -55,55 +56,100 @@ export default function ReportsScreen() {
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }} edges={['top']}>
       {/* Header */}
-      <View style={[s.header, { backgroundColor: colors.background, borderBottomColor: colors.divider }]}>
-        <Text style={[s.headerTitle, { color: colors.text }]}>📊 Reports</Text>
+      <View style={[s.header, { backgroundColor: colors.background }]}>
+        <Text style={[s.headerTitle, { color: colors.text }]}>Reports</Text>
       </View>
 
-      <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 40 }}>
+      <ScrollView contentContainerStyle={{ padding: 24, paddingBottom: 40 }} showsVerticalScrollIndicator={false}>
         {/* Period Selector */}
         <View style={s.periodRow}>
-          {(['Daily', 'Weekly', 'Monthly'] as Period[]).map(p => (
-            <TouchableOpacity
-              key={p}
-              style={[
-                s.periodBtn,
-                {
-                  backgroundColor: period === p ? colors.primary : colors.backgroundElement,
-                  borderColor: period === p ? colors.primary : colors.border,
-                }
-              ]}
-              onPress={() => setPeriod(p)}
-              activeOpacity={0.8}
-            >
-              <Text style={[s.periodTxt, { color: period === p ? colors.onPrimary : colors.text }]}>{p}</Text>
-            </TouchableOpacity>
-          ))}
+          {(['Daily', 'Weekly', 'Monthly'] as Period[]).map(p => {
+            const isSelected = period === p;
+            return (
+              <TouchableOpacity
+                key={p}
+                style={[
+                  s.periodBtn,
+                  {
+                    backgroundColor: isSelected ? colors.primary : colors.backgroundElement,
+                    borderColor: isSelected ? colors.primary : colors.border,
+                  }
+                ]}
+                onPress={() => setPeriod(p)}
+                activeOpacity={0.8}
+              >
+                <Text style={[s.periodTxt, { color: isSelected ? colors.onPrimary : colors.textSecondary }]}>
+                  {p}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
         </View>
 
         {/* Period Stats */}
-        <Text style={[s.section, { color: colors.text }]}>
+        <Text style={[s.section, { color: colors.textSecondary }]}>
           {period === 'Daily' ? "Today's" : period === 'Weekly' ? "This Week's" : "This Month's"} Summary
         </Text>
         <View style={s.grid}>
-          <StatCard emoji="💰" label="Income Collected" value={`₹${incomeCollected.toLocaleString('en-IN')}`} accent={colors.success} colors={colors} />
-          <StatCard emoji="📝" label="Orders Created" value={String(ordersCreated)} accent={colors.primary} colors={colors} />
-          <StatCard emoji="✅" label="Delivered" value={String(ordersDelivered)} accent={colors.success} colors={colors} />
-          <StatCard emoji="🕐" label="Still Active" value={String(ordersCreated - ordersDelivered)} accent={colors.warning} colors={colors} />
+          <StatCard
+            icon="payments"
+            label="Income Collected"
+            value={`₹${incomeCollected.toLocaleString('en-IN')}`}
+            iconColor="#16A34A"
+            colors={colors}
+          />
+          <StatCard
+            icon="create"
+            label="Orders Created"
+            value={String(ordersCreated)}
+            iconColor={colors.primary}
+            colors={colors}
+          />
+          <StatCard
+            icon="check-circle"
+            label="Delivered"
+            value={String(ordersDelivered)}
+            iconColor="#2563EB"
+            colors={colors}
+          />
+          <StatCard
+            icon="hourglass-empty"
+            label="Still Active"
+            value={String(ordersCreated - ordersDelivered)}
+            iconColor="#D97706"
+            colors={colors}
+          />
         </View>
 
         {/* Overall Health */}
-        <Text style={[s.section, { color: colors.text }]}>Overall Business Health</Text>
+        <Text style={[s.section, { color: colors.textSecondary, marginTop: 12 }]}>Overall Business Health</Text>
         <View style={[s.overallCard, { backgroundColor: colors.backgroundElement, borderColor: colors.border }]}>
-          <Row label="Total Customers" value={String(customers.filter(c => c.isActive).length)} colors={colors} />
-          <Row label="Total Orders" value={String(orders.length)} colors={colors} />
-          <Row label="Total Pending Balance" value={`₹${totalPendingBalance.toLocaleString('en-IN')}`} valueColor={totalPendingBalance > 0 ? colors.error : colors.success} colors={colors} />
-          <Row label="Overdue Orders" value={String(overdueCount)} valueColor={overdueCount > 0 ? colors.error : colors.success} colors={colors} />
+          <Row label="Total Active Customers" value={String(customers.filter(c => c.isActive).length)} colors={colors} />
+          <View style={[s.divider, { backgroundColor: colors.divider }]} />
+          <Row label="Total Orders Booked" value={String(orders.length)} colors={colors} />
+          <View style={[s.divider, { backgroundColor: colors.divider }]} />
+          <Row
+            label="Total Outstanding Balance"
+            value={`₹${totalPendingBalance.toLocaleString('en-IN')}`}
+            valueColor={totalPendingBalance > 0 ? colors.error : '#16A34A'}
+            colors={colors}
+          />
+          <View style={[s.divider, { backgroundColor: colors.divider }]} />
+          <Row
+            label="Overdue Orders"
+            value={String(overdueCount)}
+            valueColor={overdueCount > 0 ? colors.error : '#16A34A'}
+            colors={colors}
+          />
         </View>
 
         {/* Garment Breakdown */}
         {sortedGarments.length > 0 && (
           <>
-            <Text style={[s.section, { color: colors.text }]}>🧵 Garments by Volume</Text>
+            <View style={s.sectionHeaderRow}>
+              <MaterialIcons name="content-cut" size={16} color={colors.textSecondary} />
+              <Text style={[s.section, { color: colors.textSecondary, marginTop: 0, marginBottom: 0 }]}>Garments by Volume</Text>
+            </View>
             <View style={[s.overallCard, { backgroundColor: colors.backgroundElement, borderColor: colors.border }]}>
               {sortedGarments.map(([type, count], idx) => (
                 <View key={type}>
@@ -134,7 +180,10 @@ export default function ReportsScreen() {
         {/* Top Customers */}
         {topCustomers.length > 0 && (
           <>
-            <Text style={[s.section, { color: colors.text }]}>⭐ Top Customers by Spend</Text>
+            <View style={s.sectionHeaderRow}>
+              <MaterialIcons name="star-rate" size={16} color={colors.textSecondary} />
+              <Text style={[s.section, { color: colors.textSecondary, marginTop: 0, marginBottom: 0 }]}>Top Customers by Spend</Text>
+            </View>
             <View style={[s.overallCard, { backgroundColor: colors.backgroundElement, borderColor: colors.border }]}>
               {topCustomers.map(([cid, spend], idx) => {
                 const cust = customers.find(c => c.id === cid);
@@ -159,10 +208,12 @@ export default function ReportsScreen() {
   );
 }
 
-function StatCard({ emoji, label, value, accent, colors }: any) {
+function StatCard({ icon, label, value, iconColor, colors }: any) {
   return (
-    <View style={[s.statCard, { backgroundColor: colors.backgroundElement, borderColor: colors.border, borderLeftColor: accent, borderLeftWidth: 4 }]}>
-      <Text style={{ fontSize: 24 }}>{emoji}</Text>
+    <View style={[s.statCard, { backgroundColor: colors.backgroundElement, borderColor: colors.border }]}>
+      <View style={[s.statIconCircle, { backgroundColor: iconColor + '12' }]}>
+        <MaterialIcons name={icon} size={20} color={iconColor} />
+      </View>
       <Text style={[s.statVal, { color: colors.text }]}>{value}</Text>
       <Text style={[s.statLabel, { color: colors.textSecondary }]}>{label}</Text>
     </View>
@@ -183,38 +234,46 @@ const s = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 20,
+    paddingHorizontal: 24,
     paddingVertical: 16,
-    borderBottomWidth: 1,
   },
-  headerTitle: { fontSize: 20, fontWeight: 'bold', letterSpacing: -0.5 },
-  periodRow: { flexDirection: 'row', gap: 10, marginBottom: 24 },
-  periodBtn: { flex: 1, paddingVertical: 12, borderRadius: 14, borderWidth: 1.5, alignItems: 'center' },
+  headerTitle: { fontSize: 28, fontWeight: '800', letterSpacing: -0.5 },
+  periodRow: { flexDirection: 'row', gap: 8, marginBottom: 24 },
+  periodBtn: { flex: 1, height: 40, borderRadius: 20, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
   periodTxt: { fontWeight: '700', fontSize: 13 },
-  section: { fontSize: 11, fontWeight: '700', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 12, marginTop: 12 },
-  grid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', marginBottom: 20 },
+  section: { fontSize: 11, fontWeight: '700', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 12, marginTop: 16 },
+  sectionHeaderRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 16, marginBottom: 12 },
+  grid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', marginBottom: 16 },
   statCard: {
     width: '48%',
-    borderRadius: 16,
-    borderWidth: 1.5,
+    borderRadius: 20,
+    borderWidth: 1,
     padding: 16,
-    marginBottom: 12,
+    marginBottom: 16,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.03,
-    shadowRadius: 3,
-    elevation: 1
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.02,
+    shadowRadius: 8,
+    elevation: 2
   },
-  statVal: { fontSize: 20, fontWeight: '800', marginTop: 10, marginBottom: 2, letterSpacing: -0.5 },
-  statLabel: { fontSize: 11, fontWeight: '600' },
-  overallCard: { borderRadius: 16, borderWidth: 1.5, padding: 8, marginBottom: 20 },
-  rowItem: { flexDirection: 'row', justifyContent: 'space-between', padding: 12 },
-  rowLabel: { fontSize: 14, fontWeight: '500' },
+  statIconCircle: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  statVal: { fontSize: 20, fontWeight: '800', marginBottom: 2, letterSpacing: -0.5 },
+  statLabel: { fontSize: 11, fontWeight: '700' },
+  overallCard: { borderRadius: 20, borderWidth: 1, padding: 8, marginBottom: 20 },
+  rowItem: { flexDirection: 'row', justifyContent: 'space-between', padding: 14, alignItems: 'center' },
+  rowLabel: { fontSize: 14, fontWeight: '600' },
   rowValue: { fontSize: 14, fontWeight: '700' },
-  divider: { height: 1.5, marginHorizontal: 12 },
-  garmentRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 12 },
-  garmentType: { fontSize: 14, flex: 1, fontWeight: '500' },
-  barBg: { width: 80, height: 8, borderRadius: 4, overflow: 'hidden', marginRight: 8 },
-  barFill: { height: '100%', borderRadius: 4 },
+  divider: { height: 1, marginHorizontal: 14 },
+  garmentRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 14 },
+  garmentType: { fontSize: 14, flex: 1, fontWeight: '600' },
+  barBg: { width: 80, height: 6, borderRadius: 3, overflow: 'hidden', marginRight: 12 },
+  barFill: { height: '100%', borderRadius: 3 },
   garmentCount: { fontSize: 14, fontWeight: '700', width: 24, textAlign: 'right' },
 });

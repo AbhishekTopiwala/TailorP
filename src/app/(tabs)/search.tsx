@@ -4,6 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { Colors } from '@/constants/theme';
 import { useAppStore, getBalance } from '@/store/AppStore';
+import { MaterialIcons } from '@expo/vector-icons';
 
 export default function SearchScreen() {
   const scheme = useColorScheme();
@@ -31,16 +32,16 @@ export default function SearchScreen() {
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }} edges={['top']}>
       {/* Header */}
-      <View style={[s.header, { backgroundColor: colors.background, borderBottomColor: colors.divider }]}>
-        <Text style={[s.headerTitle, { color: colors.text }]}>🔍 Search</Text>
+      <View style={[s.header, { backgroundColor: colors.background }]}>
+        <Text style={[s.headerTitle, { color: colors.text }]}>Search</Text>
       </View>
 
-      {/* Search Input */}
+      {/* Search Input Box */}
       <View style={[s.searchBox, { backgroundColor: colors.backgroundElement, borderColor: colors.border }]}>
-        <Text style={{ fontSize: 16, marginRight: 8 }}>🔍</Text>
+        <MaterialIcons name="search" size={20} color={colors.textSecondary} style={{ marginRight: 8 }} />
         <TextInput
           style={[s.input, { color: colors.text }]}
-          placeholder="Search by client, phone, or order #…"
+          placeholder="Search by name, phone, or order number..."
           placeholderTextColor={colors.placeholder}
           value={query}
           onChangeText={setQuery}
@@ -48,39 +49,51 @@ export default function SearchScreen() {
           returnKeyType="search"
         />
         {query.length > 0 && (
-          <TouchableOpacity onPress={() => setQuery('')} activeOpacity={0.7}>
-            <Text style={{ color: colors.textSecondary, fontSize: 18 }}>✕</Text>
+          <TouchableOpacity onPress={() => setQuery('')} activeOpacity={0.7} style={{ padding: 4 }}>
+            <MaterialIcons name="close" size={18} color={colors.textSecondary} />
           </TouchableOpacity>
         )}
       </View>
 
       {q.length === 0 ? (
-        <View style={{ alignItems: 'center', marginTop: 80, paddingHorizontal: 20 }}>
-          <Text style={{ fontSize: 56 }}>🔍</Text>
-          <Text style={{ color: colors.textSecondary, marginTop: 14, fontSize: 15, textAlign: 'center', lineHeight: 22 }}>
-            Search for client names, phone numbers,{'\n'}or specific order tracking numbers
+        <View style={s.centerState}>
+          <View style={[s.emptyIconContainer, { backgroundColor: colors.backgroundElement }]}>
+            <MaterialIcons name="search" size={36} color={colors.textSecondary} />
+          </View>
+          <Text style={[s.emptyText, { color: colors.textSecondary }]}>
+            Search for client names, phone numbers,{"\n"}or specific order tracking numbers
           </Text>
         </View>
       ) : !hasResults ? (
-        <View style={{ alignItems: 'center', marginTop: 80, paddingHorizontal: 20 }}>
-          <Text style={{ fontSize: 56 }}>😕</Text>
-          <Text style={{ color: colors.textSecondary, marginTop: 14, fontSize: 15, textAlign: 'center' }}>
+        <View style={s.centerState}>
+          <View style={[s.emptyIconContainer, { backgroundColor: colors.backgroundElement }]}>
+            <MaterialIcons name="search-off" size={36} color={colors.textSecondary} />
+          </View>
+          <Text style={[s.emptyText, { color: colors.textSecondary }]}>
             No results matched "{query}"
           </Text>
         </View>
       ) : (
         <FlatList
           data={[
-            ...(matchedCustomers.length > 0 ? [{ type: 'header', label: `👥 Clients (${matchedCustomers.length})` }] : []),
+            ...(matchedCustomers.length > 0 ? [{ type: 'header', label: 'Clients', count: matchedCustomers.length, icon: 'people' }] : []),
             ...matchedCustomers.map(c => ({ type: 'customer', data: c })),
-            ...(matchedOrders.length > 0 ? [{ type: 'header', label: `📋 Orders (${matchedOrders.length})` }] : []),
+            ...(matchedOrders.length > 0 ? [{ type: 'header', label: 'Orders', count: matchedOrders.length, icon: 'receipt' }] : []),
             ...matchedOrders.map(o => ({ type: 'order', data: o })),
           ]}
           keyExtractor={(item: any, i) => `${item.type}-${item.data?.id || i}`}
-          contentContainerStyle={{ padding: 20, paddingBottom: 40 }}
+          contentContainerStyle={{ padding: 24, paddingBottom: 40 }}
+          showsVerticalScrollIndicator={false}
           renderItem={({ item }: any) => {
             if (item.type === 'header') {
-              return <Text style={[s.sectionLabel, { color: colors.text }]}>{item.label}</Text>;
+              return (
+                <View style={s.sectionHeaderRow}>
+                  <MaterialIcons name={item.icon} size={14} color={colors.textSecondary} />
+                  <Text style={[s.sectionLabel, { color: colors.textSecondary }]}>
+                    {item.label} ({item.count})
+                  </Text>
+                </View>
+              );
             }
             if (item.type === 'customer') {
               const c = item.data;
@@ -88,16 +101,19 @@ export default function SearchScreen() {
                 <TouchableOpacity
                   style={[s.card, { backgroundColor: colors.backgroundElement, borderColor: colors.border }]}
                   onPress={() => router.push(`/customer/${c.id}`)}
-                  activeOpacity={0.8}
+                  activeOpacity={0.85}
                 >
                   <View style={[s.avatar, { backgroundColor: colors.primary }]}>
                     <Text style={[s.avatarTxt, { color: colors.onPrimary }]}>{c.name.charAt(0).toUpperCase()}</Text>
                   </View>
                   <View style={{ marginLeft: 16, flex: 1 }}>
                     <Text style={[s.name, { color: colors.text }]}>{c.name}</Text>
-                    <Text style={[s.sub, { color: colors.textSecondary }]}>📞 {c.phone} · {c.displayCode}</Text>
+                    <View style={s.subRow}>
+                      <MaterialIcons name="phone" size={12} color={colors.textSecondary} />
+                      <Text style={[s.sub, { color: colors.textSecondary }]}>{c.phone} · {c.displayCode}</Text>
+                    </View>
                   </View>
-                  <Text style={{ color: colors.textSecondary, fontSize: 20 }}>›</Text>
+                  <MaterialIcons name="chevron-right" size={20} color={colors.textSecondary} />
                 </TouchableOpacity>
               );
             }
@@ -109,19 +125,19 @@ export default function SearchScreen() {
                 <TouchableOpacity
                   style={[s.card, { backgroundColor: colors.backgroundElement, borderColor: colors.border }]}
                   onPress={() => router.push(`/order/${o.id}`)}
-                  activeOpacity={0.8}
+                  activeOpacity={0.85}
                 >
                   <View style={[s.orderIcon, { backgroundColor: colors.divider }]}>
-                    <Text style={{ fontSize: 18 }}>📋</Text>
+                    <MaterialIcons name="receipt" size={18} color={colors.textSecondary} />
                   </View>
                   <View style={{ flex: 1, marginLeft: 16 }}>
                     <Text style={[s.name, { color: colors.text }]}>{o.orderNumber}</Text>
                     <Text style={[s.sub, { color: colors.textSecondary }]}>{cust?.name} · {o.status}</Text>
-                    <Text style={[s.sub, { color: colors.textSecondary, fontWeight: '600' }]}>
-                      ₹{o.totalAmount.toLocaleString('en-IN')} {balance > 0 ? `· Bal ₹${balance}` : '· Paid'}
+                    <Text style={[s.sub, { color: colors.textSecondary, fontWeight: '700', marginTop: 2 }]}>
+                      ₹{o.totalAmount.toLocaleString('en-IN')} {balance > 0 ? `· Bal: ₹${balance}` : '· Paid'}
                     </Text>
                   </View>
-                  <Text style={{ color: colors.textSecondary, fontSize: 20 }}>›</Text>
+                  <MaterialIcons name="chevron-right" size={20} color={colors.textSecondary} />
                 </TouchableOpacity>
               );
             }
@@ -138,37 +154,50 @@ const s = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 20,
+    paddingHorizontal: 24,
     paddingVertical: 16,
-    borderBottomWidth: 1,
   },
-  headerTitle: { fontSize: 20, fontWeight: 'bold', letterSpacing: -0.5 },
+  headerTitle: { fontSize: 28, fontWeight: '800', letterSpacing: -0.5 },
   searchBox: {
     flexDirection: 'row',
     alignItems: 'center',
-    margin: 20,
-    padding: 12,
-    borderRadius: 14,
-    borderWidth: 1.5
+    marginHorizontal: 24,
+    marginBottom: 8,
+    paddingHorizontal: 16,
+    height: 48,
+    borderRadius: 24,
+    borderWidth: 1
   },
-  input: { flex: 1, fontSize: 15 },
-  sectionLabel: { fontSize: 11, fontWeight: '700', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 12, marginTop: 16 },
+  input: { flex: 1, fontSize: 15, fontWeight: '500' },
+  sectionHeaderRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 20, marginBottom: 12 },
+  sectionLabel: { fontSize: 11, fontWeight: '700', letterSpacing: 1, textTransform: 'uppercase' },
   card: {
     flexDirection: 'row',
     alignItems: 'center',
     padding: 16,
-    borderRadius: 16,
-    marginBottom: 10,
-    borderWidth: 1.5,
+    borderRadius: 20,
+    marginBottom: 12,
+    borderWidth: 1,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.03,
-    shadowRadius: 3,
-    elevation: 1
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.02,
+    shadowRadius: 8,
+    elevation: 2
   },
   avatar: { width: 40, height: 40, borderRadius: 20, justifyContent: 'center', alignItems: 'center' },
-  avatarTxt: { fontSize: 16, fontWeight: 'bold' },
+  avatarTxt: { fontSize: 16, fontWeight: '800' },
   orderIcon: { width: 40, height: 40, borderRadius: 20, justifyContent: 'center', alignItems: 'center' },
   name: { fontSize: 15, fontWeight: '700', letterSpacing: -0.2 },
-  sub: { fontSize: 12, marginTop: 2 },
+  subRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 3 },
+  sub: { fontSize: 12, fontWeight: '500' },
+  centerState: { alignItems: 'center', marginTop: 100, paddingHorizontal: 40 },
+  emptyIconContainer: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 8
+  },
+  emptyText: { marginTop: 16, fontSize: 15, textAlign: 'center', lineHeight: 22, fontWeight: '500' }
 });

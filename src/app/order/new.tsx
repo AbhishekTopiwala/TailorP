@@ -4,11 +4,20 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, Stack } from 'expo-router';
 import { Colors } from '@/constants/theme';
 import { useAppStore, GarmentType } from '@/store/AppStore';
+import { MaterialIcons } from '@expo/vector-icons';
 
 const GARMENT_TYPES: GarmentType[] = ['Shirt', 'Pant', 'Kurta', 'Blazer', 'Sherwani', 'Blouse', 'Lehenga', 'Kids Wear', 'Custom'];
-const GARMENT_EMOJIS: Record<string, string> = {
-  'Shirt': '👔', 'Pant': '👖', 'Kurta': '🥻', 'Blazer': '🧥',
-  'Sherwani': '🎩', 'Blouse': '👚', 'Lehenga': '💃', 'Kids Wear': '🧒', 'Custom': '✂️',
+
+const GARMENT_ICONS: Record<GarmentType, string> = {
+  'Shirt': 'checkroom',
+  'Pant': 'straighten',
+  'Kurta': 'spa',
+  'Blazer': 'business-center',
+  'Sherwani': 'auto-awesome',
+  'Blouse': 'brush',
+  'Lehenga': 'celebration',
+  'Kids Wear': 'child-care',
+  'Custom': 'content-cut',
 };
 
 const MEASUREMENT_FIELDS: Record<GarmentType, string[]> = {
@@ -24,10 +33,10 @@ const MEASUREMENT_FIELDS: Record<GarmentType, string[]> = {
 };
 
 const FABRIC_SWATCHES = [
-  { id: 'Cotton', name: 'Cotton', emoji: '🪶', desc: 'Soft & breathable', color: '#F7F5F0' },
-  { id: 'Linen', name: 'Linen', emoji: '🌾', desc: 'Light & textured', color: '#F2ECE4' },
-  { id: 'Silk', name: 'Silk', emoji: '✨', desc: 'Luxurious & smooth', color: '#F5EBF0' },
-  { id: 'Wool', name: 'Wool', emoji: '🧶', desc: 'Warm & heavy', color: '#ECEFF2' },
+  { id: 'Cotton', name: 'Cotton', icon: 'opacity', desc: 'Soft & breathable' },
+  { id: 'Linen', name: 'Linen', icon: 'waves', desc: 'Light & textured' },
+  { id: 'Silk', name: 'Silk', icon: 'auto-awesome', desc: 'Luxurious & smooth' },
+  { id: 'Wool', name: 'Wool', icon: 'grain', desc: 'Warm & heavy' },
 ];
 
 export default function NewOrderScreen() {
@@ -57,7 +66,6 @@ export default function NewOrderScreen() {
   const selectedCustomer = customers.find(c => c.id === customerId);
   const fields = MEASUREMENT_FIELDS[garmentType];
 
-  // Auto-fill measurements from previous order
   function autoFill() {
     if (!customerId) return;
     const prev = orders
@@ -92,7 +100,6 @@ export default function NewOrderScreen() {
     if (!deliveryDate) {
       errs.deliveryDate = 'Delivery date is required';
     } else {
-      // Validate date format YYYY-MM-DD
       const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
       if (!dateRegex.test(deliveryDate)) {
         errs.deliveryDate = 'Use YYYY-MM-DD format';
@@ -144,24 +151,26 @@ export default function NewOrderScreen() {
           <View style={{ height: 3, backgroundColor: colors.primary, width: `${(step / 3) * 100}%` }} />
         </View>
 
-        <ScrollView contentContainerStyle={{ padding: 20 }} keyboardShouldPersistTaps="handled">
-          {/* ─── Step 1: Customer ─── */}
+        <ScrollView contentContainerStyle={{ padding: 24 }} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+          {/* Step 1: Customer Selection */}
           {step === 1 && (
             <View>
               <Text style={[s.stepTitle, { color: colors.text }]}>Choose a Client</Text>
               <Text style={[s.stepSub, { color: colors.textSecondary }]}>Select an existing client to bind to this new order.</Text>
 
-              <View style={[s.searchBar, { backgroundColor: colors.backgroundElement, borderColor: colors.border }]}>
-                <Text style={{ marginRight: 8, fontSize: 16 }}>🔍</Text>
+              <View style={[s.searchBar, { backgroundColor: colors.backgroundElement, borderColor: focusedInput === 'search' ? colors.borderFocus : colors.border }]}>
+                <MaterialIcons name="search" size={20} color={colors.textSecondary} style={{ marginRight: 8 }} />
                 <TextInput
                   style={[s.searchInput, { color: colors.text }]}
                   placeholder="Search client by name or phone…"
                   placeholderTextColor={colors.placeholder}
                   value={custSearch}
                   onChangeText={setCustSearch}
+                  onFocus={() => setFocusedInput('search')}
+                  onBlur={() => setFocusedInput(null)}
                 />
               </View>
-              {errors.customerId && <Text style={{ color: colors.error, fontSize: 14, fontWeight: '600', marginBottom: 12 }}>{errors.customerId}</Text>}
+              {errors.customerId && <Text style={{ color: colors.error, fontSize: 13, fontWeight: '600', marginBottom: 12 }}>{errors.customerId}</Text>}
 
               <View style={{ gap: 10 }}>
                 {filteredCustomers.slice(0, 5).map(c => (
@@ -170,12 +179,12 @@ export default function NewOrderScreen() {
                     style={[
                       s.custItem,
                       {
-                        backgroundColor: customerId === c.id ? colors.primary + '10' : colors.backgroundElement,
+                        backgroundColor: customerId === c.id ? colors.primary + '08' : colors.backgroundElement,
                         borderColor: customerId === c.id ? colors.primary : colors.border,
                       }
                     ]}
                     onPress={() => setCustomerId(c.id)}
-                    activeOpacity={0.8}
+                    activeOpacity={0.75}
                   >
                     <View style={[s.avatar, { backgroundColor: customerId === c.id ? colors.primary : colors.divider }]}>
                       <Text style={[s.avatarTxt, { color: customerId === c.id ? colors.onPrimary : colors.text }]}>
@@ -186,24 +195,24 @@ export default function NewOrderScreen() {
                       <Text style={[s.custName, { color: colors.text }]}>{c.name}</Text>
                       <Text style={[s.custPhone, { color: colors.textSecondary }]}>{c.phone} · {c.displayCode}</Text>
                     </View>
-                    {customerId === c.id && (
+                    {customerId === c.id ? (
                       <View style={[s.checkCircle, { backgroundColor: colors.primary }]}>
-                        <Text style={{ color: colors.onPrimary, fontSize: 11, fontWeight: 'bold' }}>✓</Text>
+                        <MaterialIcons name="check" size={12} color={colors.onPrimary} />
                       </View>
+                    ) : (
+                      <MaterialIcons name="chevron-right" size={18} color={colors.textSecondary} />
                     )}
                   </TouchableOpacity>
                 ))}
                 {filteredCustomers.length === 0 && (
-                  <View style={{ alignItems: 'center', padding: 24 }}>
-                    <Text style={{ fontSize: 40, marginBottom: 8 }}>👥</Text>
-                    <Text style={{ color: colors.textSecondary, textAlign: 'center' }}>No matching clients found.</Text>
+                  <View style={{ alignItems: 'center', padding: 32 }}>
+                    <MaterialIcons name="people-outline" size={48} color={colors.textSecondary} style={{ marginBottom: 8 }} />
+                    <Text style={{ color: colors.textSecondary, textAlign: 'center', fontSize: 14 }}>No matching clients found.</Text>
                     <TouchableOpacity
-                      style={{ marginTop: 12 }}
-                      onPress={() => {
-                        router.push('/(tabs)/customers');
-                      }}
+                      style={{ marginTop: 16 }}
+                      onPress={() => router.push('/customer/new')}
                     >
-                      <Text style={{ color: colors.primary, fontWeight: '700' }}>+ Add New Client</Text>
+                      <Text style={{ color: colors.primary, fontWeight: '700', fontSize: 14 }}>+ Add New Client</Text>
                     </TouchableOpacity>
                   </View>
                 )}
@@ -211,32 +220,38 @@ export default function NewOrderScreen() {
             </View>
           )}
 
-          {/* ─── Step 2: Garment & Measurements ─── */}
+          {/* Step 2: Garment & Measurements */}
           {step === 2 && (
             <View>
               <Text style={[s.stepTitle, { color: colors.text }]}>Order Details</Text>
-              <Text style={{ color: colors.primary, fontWeight: '700', marginBottom: 20 }}>Client: {selectedCustomer?.name}</Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 20 }}>
+                <MaterialIcons name="person" size={16} color={colors.primary} />
+                <Text style={{ color: colors.primary, fontWeight: '700', fontSize: 14 }}>Client: {selectedCustomer?.name}</Text>
+              </View>
 
               {/* Garment Selector */}
               <Text style={[s.fieldLabel, { color: colors.text }]}>Garment Type</Text>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 20, marginHorizontal: -20, paddingHorizontal: 20 }}>
-                {GARMENT_TYPES.map(g => (
-                  <TouchableOpacity
-                    key={g}
-                    style={[
-                      s.garmentChip,
-                      {
-                        backgroundColor: garmentType === g ? colors.primary : colors.backgroundElement,
-                        borderColor: garmentType === g ? colors.primary : colors.border,
-                      }
-                    ]}
-                    onPress={() => { setGarmentType(g); setMeasurements({}); }}
-                    activeOpacity={0.8}
-                  >
-                    <Text style={{ fontSize: 22, marginBottom: 6 }}>{GARMENT_EMOJIS[g]}</Text>
-                    <Text style={[s.garmentChipTxt, { color: garmentType === g ? colors.onPrimary : colors.text }]}>{g}</Text>
-                  </TouchableOpacity>
-                ))}
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 20, marginHorizontal: -24, paddingHorizontal: 24 }}>
+                {GARMENT_TYPES.map(g => {
+                  const isSelected = garmentType === g;
+                  return (
+                    <TouchableOpacity
+                      key={g}
+                      style={[
+                        s.garmentChip,
+                        {
+                          backgroundColor: isSelected ? colors.primary : colors.backgroundElement,
+                          borderColor: isSelected ? colors.primary : colors.border,
+                        }
+                      ]}
+                      onPress={() => { setGarmentType(g); setMeasurements({}); }}
+                      activeOpacity={0.8}
+                    >
+                      <MaterialIcons name={GARMENT_ICONS[g] as any} size={22} color={isSelected ? colors.onPrimary : colors.textSecondary} style={{ marginBottom: 6 }} />
+                      <Text style={[s.garmentChipTxt, { color: isSelected ? colors.onPrimary : colors.text }]}>{g}</Text>
+                    </TouchableOpacity>
+                  );
+                })}
               </ScrollView>
 
               {/* Fabric Swatches */}
@@ -257,14 +272,14 @@ export default function NewOrderScreen() {
                       onPress={() => setFabric(f.id)}
                       activeOpacity={0.8}
                     >
-                      <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 4 }}>
-                        <Text style={{ fontSize: 18, marginRight: 6 }}>{f.emoji}</Text>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 4, gap: 6 }}>
+                        <MaterialIcons name={f.icon as any} size={16} color={isSelected ? colors.primary : colors.textSecondary} />
                         <Text style={[s.fabricName, { color: colors.text }]}>{f.name}</Text>
                       </View>
                       <Text style={[s.fabricDesc, { color: colors.textSecondary }]}>{f.desc}</Text>
                       {isSelected && (
                         <View style={[s.fabricCheck, { backgroundColor: colors.primary }]}>
-                          <Text style={{ color: colors.onPrimary, fontSize: 10, fontWeight: 'bold' }}>✓</Text>
+                          <MaterialIcons name="check" size={10} color={colors.onPrimary} />
                         </View>
                       )}
                     </TouchableOpacity>
@@ -282,7 +297,7 @@ export default function NewOrderScreen() {
                       onPress={() => setQuantity(q => String(Math.max(1, Number(q) - 1)))}
                       activeOpacity={0.7}
                     >
-                      <Text style={{ fontSize: 18, color: colors.text, fontWeight: 'bold' }}>−</Text>
+                      <MaterialIcons name="remove" size={18} color={colors.text} />
                     </TouchableOpacity>
                     <Text style={[s.qtyVal, { color: colors.text }]}>{quantity}</Text>
                     <TouchableOpacity
@@ -290,7 +305,7 @@ export default function NewOrderScreen() {
                       onPress={() => setQuantity(q => String(Number(q) + 1))}
                       activeOpacity={0.7}
                     >
-                      <Text style={{ fontSize: 18, color: colors.text, fontWeight: 'bold' }}>+</Text>
+                      <MaterialIcons name="add" size={18} color={colors.text} />
                     </TouchableOpacity>
                   </View>
                 </View>
@@ -329,7 +344,10 @@ export default function NewOrderScreen() {
               <View style={s.measHeader}>
                 <Text style={[s.fieldLabel, { marginTop: 0, color: colors.text }]}>Measurements (inches)</Text>
                 <TouchableOpacity onPress={autoFill} style={[s.autoFillBtn, { borderColor: colors.primary }]} activeOpacity={0.7}>
-                  <Text style={[s.autoFillTxt, { color: colors.primary }]}>↑ Auto-Fill</Text>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                    <MaterialIcons name="refresh" size={14} color={colors.primary} />
+                    <Text style={[s.autoFillTxt, { color: colors.primary }]}>Auto-Fill</Text>
+                  </View>
                 </TouchableOpacity>
               </View>
 
@@ -346,7 +364,7 @@ export default function NewOrderScreen() {
                         style={[s.measCardBtn, { backgroundColor: colors.background }]}
                         activeOpacity={0.7}
                       >
-                        <Text style={{ color: colors.text, fontSize: 16, fontWeight: 'bold' }}>−</Text>
+                        <MaterialIcons name="remove" size={14} color={colors.text} />
                       </TouchableOpacity>
                       <TextInput
                         style={[s.measCardVal, { color: colors.text }]}
@@ -364,7 +382,7 @@ export default function NewOrderScreen() {
                         style={[s.measCardBtn, { backgroundColor: colors.background }]}
                         activeOpacity={0.7}
                       >
-                        <Text style={{ color: colors.text, fontSize: 16, fontWeight: 'bold' }}>+</Text>
+                        <MaterialIcons name="add" size={14} color={colors.text} />
                       </TouchableOpacity>
                     </View>
                   </View>
@@ -373,7 +391,7 @@ export default function NewOrderScreen() {
             </View>
           )}
 
-          {/* ─── Step 3: Delivery & Confirm ─── */}
+          {/* Step 3: Delivery & Confirm */}
           {step === 3 && (
             <View>
               <Text style={[s.stepTitle, { color: colors.text }]}>Finalize Order</Text>
@@ -383,8 +401,8 @@ export default function NewOrderScreen() {
               <View style={[s.summaryCard, { backgroundColor: colors.backgroundElement, borderColor: colors.border }]}>
                 <Text style={[s.summaryTitle, { color: colors.text }]}>Order Summary</Text>
                 <SummaryRow label="Client Name" value={selectedCustomer?.name || ''} colors={colors} />
-                <SummaryRow label="Garment & Qty" value={`${GARMENT_EMOJIS[garmentType]} ${garmentType} (x${quantity})`} colors={colors} />
-                <SummaryRow label="Fabric selected" value={`${fabric}`} colors={colors} />
+                <SummaryRow label="Garment & Qty" value={`${garmentType} (x${quantity})`} colors={colors} />
+                <SummaryRow label="Fabric Selected" value={`${fabric}`} colors={colors} />
                 <SummaryRow label="Total Amount" value={`₹${(Number(price) * Number(quantity)).toLocaleString('en-IN')}`} colors={colors} bold />
                 <SummaryRow label="Filled Details" value={`${Object.values(measurements).filter(v => v).length} of ${fields.length} measurements`} colors={colors} />
               </View>
@@ -423,9 +441,12 @@ export default function NewOrderScreen() {
                     onPress={() => setPriority(p)}
                     activeOpacity={0.8}
                   >
-                    <Text style={[s.priorityTxt, { color: priority === p ? colors.onPrimary : colors.text }]}>
-                      {p === 'Urgent' ? '🔥 Urgent' : '✅ Normal'}
-                    </Text>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                      <MaterialIcons name={p === 'Urgent' ? 'whatshot' : 'check-circle-outline'} size={16} color={priority === p ? colors.onPrimary : colors.textSecondary} />
+                      <Text style={[s.priorityTxt, { color: priority === p ? colors.onPrimary : colors.text }]}>
+                        {p}
+                      </Text>
+                    </View>
                   </TouchableOpacity>
                 ))}
               </View>
@@ -496,52 +517,52 @@ const s = StyleSheet.create({
   stepTitle: { fontSize: 22, fontWeight: 'bold', letterSpacing: -0.5, marginBottom: 4 },
   stepSub: { fontSize: 13, lineHeight: 18, marginBottom: 20 },
   fieldLabel: { fontSize: 11, fontWeight: '700', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 8, marginTop: 16 },
-  searchBar: { flexDirection: 'row', alignItems: 'center', marginBottom: 12, padding: 12, borderRadius: 14, borderWidth: 1.5 },
+  searchBar: { flexDirection: 'row', alignItems: 'center', marginBottom: 16, paddingHorizontal: 16, height: 52, borderRadius: 14, borderWidth: 1 },
   searchInput: { flex: 1, fontSize: 15 },
-  input: { borderWidth: 1.5, borderRadius: 14, paddingHorizontal: 16, fontSize: 15, height: 52 },
+  input: { borderWidth: 1, borderRadius: 14, paddingHorizontal: 16, fontSize: 15, height: 52 },
   multiline: { height: 80, textAlignVertical: 'top', paddingVertical: 14 },
-  custItem: { flexDirection: 'row', alignItems: 'center', padding: 14, borderRadius: 16, borderWidth: 1.5, position: 'relative' },
+  custItem: { flexDirection: 'row', alignItems: 'center', padding: 14, borderRadius: 20, borderWidth: 1, position: 'relative' },
   avatar: { width: 40, height: 40, borderRadius: 20, justifyContent: 'center', alignItems: 'center' },
   avatarTxt: { fontSize: 16, fontWeight: 'bold' },
   custName: { fontSize: 15, fontWeight: '700', letterSpacing: -0.2 },
   custPhone: { fontSize: 12, marginTop: 2 },
   checkCircle: { position: 'absolute', top: 12, right: 12, width: 20, height: 20, borderRadius: 10, justifyContent: 'center', alignItems: 'center' },
-  garmentChip: { alignItems: 'center', padding: 14, borderRadius: 16, borderWidth: 1.5, marginRight: 10, minWidth: 90 },
+  garmentChip: { alignItems: 'center', padding: 14, borderRadius: 16, borderWidth: 1, marginRight: 10, minWidth: 90 },
   garmentChipTxt: { fontSize: 12, fontWeight: '700' },
   row: { flexDirection: 'row' },
-  qtyRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderRadius: 14, borderWidth: 1.5, height: 52, paddingHorizontal: 6 },
+  qtyRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderRadius: 14, borderWidth: 1, height: 52, paddingHorizontal: 6 },
   qtyBtn: { width: 36, height: 36, borderRadius: 18, justifyContent: 'center', alignItems: 'center' },
   qtyVal: { fontSize: 16, fontWeight: '700' },
-  totalRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 16, borderRadius: 14, borderWidth: 1.5, marginTop: 16 },
+  totalRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 16, borderRadius: 14, borderWidth: 1, marginTop: 16 },
   totalLabel: { fontSize: 13, fontWeight: '600' },
   totalVal: { fontSize: 18, fontWeight: '700' },
   measHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 24, marginBottom: 12 },
-  autoFillBtn: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 10, borderWidth: 1.5 },
+  autoFillBtn: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 10, borderWidth: 1 },
   autoFillTxt: { fontSize: 12, fontWeight: '700' },
   measGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
-  measCard: { width: '48%', borderRadius: 16, borderWidth: 1.5, padding: 12 },
+  measCard: { width: '48%', borderRadius: 16, borderWidth: 1, padding: 12 },
   measCardLabel: { fontSize: 12, fontWeight: '700', marginBottom: 8 },
   measInputRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   measCardBtn: { width: 28, height: 28, borderRadius: 14, justifyContent: 'center', alignItems: 'center', borderStyle: 'solid' },
   measCardVal: { flex: 1, textAlign: 'center', fontSize: 16, fontWeight: '700', paddingVertical: 2 },
   fabricGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginBottom: 10 },
-  fabricCard: { width: '48%', borderRadius: 16, borderWidth: 1.5, padding: 14, position: 'relative' },
+  fabricCard: { width: '48%', borderRadius: 16, borderWidth: 1, padding: 14, position: 'relative' },
   fabricName: { fontSize: 14, fontWeight: '700' },
-  fabricDesc: { fontSize: 11 },
+  fabricDesc: { fontSize: 11, marginTop: 2 },
   fabricCheck: { position: 'absolute', top: 12, right: 12, width: 18, height: 18, borderRadius: 9, justifyContent: 'center', alignItems: 'center' },
-  summaryCard: { borderRadius: 16, borderWidth: 1.5, padding: 16, marginBottom: 20 },
+  summaryCard: { borderRadius: 20, borderWidth: 1, padding: 16, marginBottom: 20 },
   summaryTitle: { fontSize: 16, fontWeight: 'bold', marginBottom: 14, letterSpacing: -0.3 },
   summaryRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 10 },
   summaryLabel: { fontSize: 13 },
   summaryValue: { fontSize: 13 },
   priorityRow: { flexDirection: 'row', gap: 12, marginBottom: 10 },
-  priorityBtn: { flex: 1, paddingVertical: 14, borderRadius: 14, borderWidth: 1.5, alignItems: 'center' },
+  priorityBtn: { flex: 1, paddingVertical: 14, borderRadius: 14, borderWidth: 1, alignItems: 'center' },
   priorityTxt: { fontSize: 13, fontWeight: '700' },
   submitBtn: { height: 52, borderRadius: 26, justifyContent: 'center', alignItems: 'center', marginTop: 24 },
   submitTxt: { fontSize: 16, fontWeight: '700' },
   bottomNav: { flexDirection: 'row', padding: 16, borderTopWidth: 1, gap: 12 },
   navBtn: { height: 52, borderRadius: 26, alignItems: 'center', justifyContent: 'center', flex: 1 },
-  backBtn: { borderWidth: 1.5 },
+  backBtn: { borderWidth: 1 },
   nextBtn: {},
   navBtnTxt: { fontSize: 15, fontWeight: '700' },
 });

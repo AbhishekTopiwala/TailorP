@@ -9,40 +9,40 @@ import { Platform } from 'react-native';
 
 export const Colors = {
   light: {
-    text: '#1A1F2B',
+    text: '#1F2937',
     background: '#FFFFFF',
-    backgroundElement: '#F7F7F8',
-    backgroundSelected: '#F7F7F8',
-    textSecondary: '#4B5563',
-    primary: '#1A1F2B',
-    secondary: '#1A1F2B',
+    backgroundElement: '#F8FAFC',
+    backgroundSelected: '#E2E8F0',
+    textSecondary: '#6B7280',
+    primary: '#2563EB',
+    secondary: '#2563EB',
     surface: '#FFFFFF',
     error: '#EF4444',
     success: '#22C55E',
     warning: '#F59E0B',
     onPrimary: '#FFFFFF',
     border: '#E5E7EB',
-    borderFocus: '#1A1F2B',
+    borderFocus: '#2563EB',
     placeholder: '#9CA3AF',
-    divider: '#EEEEEE',
+    divider: '#E5E7EB',
   },
   dark: {
-    text: '#F9FAFB',
-    background: '#09090B',
-    backgroundElement: '#18181B',
-    backgroundSelected: '#27272A',
-    textSecondary: '#A1A1AA',
-    primary: '#FAFAFA',
-    secondary: '#FAFAFA',
-    surface: '#18181B',
-    error: '#F87171',
-    success: '#34D399',
-    warning: '#FBBF24',
-    onPrimary: '#09090B',
-    border: '#27272A',
-    borderFocus: '#FAFAFA',
-    placeholder: '#71717A',
-    divider: '#27272A',
+    text: '#1F2937',
+    background: '#FFFFFF',
+    backgroundElement: '#F8FAFC',
+    backgroundSelected: '#E2E8F0',
+    textSecondary: '#6B7280',
+    primary: '#2563EB',
+    secondary: '#2563EB',
+    surface: '#FFFFFF',
+    error: '#EF4444',
+    success: '#22C55E',
+    warning: '#F59E0B',
+    onPrimary: '#FFFFFF',
+    border: '#E5E7EB',
+    borderFocus: '#2563EB',
+    placeholder: '#9CA3AF',
+    divider: '#E5E7EB',
   },
 } as const;
 
@@ -50,13 +50,9 @@ export type ThemeColor = keyof typeof Colors.light & keyof typeof Colors.dark;
 
 export const Fonts = Platform.select({
   ios: {
-    /** iOS `UIFontDescriptorSystemDesignDefault` */
     sans: 'system-ui',
-    /** iOS `UIFontDescriptorSystemDesignSerif` */
     serif: 'ui-serif',
-    /** iOS `UIFontDescriptorSystemDesignRounded` */
     rounded: 'ui-rounded',
-    /** iOS `UIFontDescriptorSystemDesignMonospaced` */
     mono: 'ui-monospace',
   },
   default: {
@@ -74,13 +70,13 @@ export const Fonts = Platform.select({
 });
 
 export const Spacing = {
-  half: 2,
-  one: 4,
-  two: 8,
+  half: 4,
+  one: 8,
+  two: 12,
   three: 16,
   four: 24,
   five: 32,
-  six: 64,
+  six: 48,
 } as const;
 
 export const BottomTabInset = Platform.select({ ios: 50, android: 80 }) ?? 0;

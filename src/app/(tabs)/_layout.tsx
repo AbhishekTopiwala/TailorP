@@ -1,65 +1,65 @@
 import React from 'react';
 import { Tabs } from 'expo-router';
-import { Text, useColorScheme } from 'react-native';
 import { Colors } from '@/constants/theme';
-
-function TabIcon({ emoji, focused }: { emoji: string; focused: boolean }) {
-  return <Text style={{ fontSize: 22, opacity: focused ? 1 : 0.5 }}>{emoji}</Text>;
-}
+import { MaterialIcons } from '@expo/vector-icons';
 
 export default function TabLayout() {
-  const scheme = useColorScheme();
-  const colors = Colors[scheme === 'dark' ? 'dark' : 'light'];
+  const colors = Colors.light; // Force light theme
 
   return (
     <Tabs
       screenOptions={{
+        headerShown: false, // Use custom headers in each screen
         tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: colors.textSecondary,
         tabBarStyle: {
           backgroundColor: colors.surface,
-          borderTopColor: colors.backgroundSelected,
-          height: 60,
+          borderTopColor: colors.divider,
+          borderTopWidth: 1,
+          height: 64,
           paddingBottom: 8,
+          paddingTop: 8,
+          elevation: 8,
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: -2 },
+          shadowOpacity: 0.02,
+          shadowRadius: 4,
         },
-        tabBarLabelStyle: { fontSize: 11, fontWeight: '600' },
-        headerStyle: { backgroundColor: colors.background, shadowColor: 'transparent', elevation: 0 },
-        headerTintColor: colors.text,
-        headerTitleStyle: { fontWeight: 'bold', fontSize: 18 },
+        tabBarLabelStyle: { fontSize: 11, fontWeight: '700' },
       }}>
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Dashboard',
-          tabBarIcon: ({ focused }) => <TabIcon emoji="🏠" focused={focused} />,
+          title: 'Home',
+          tabBarIcon: ({ color, size }) => <MaterialIcons name="home" size={24} color={color} />,
         }}
       />
       <Tabs.Screen
         name="customers"
         options={{
           title: 'Customers',
-          tabBarIcon: ({ focused }) => <TabIcon emoji="👥" focused={focused} />,
+          tabBarIcon: ({ color, size }) => <MaterialIcons name="people" size={24} color={color} />,
         }}
       />
       <Tabs.Screen
         name="orders"
         options={{
           title: 'Orders',
-          tabBarIcon: ({ focused }) => <TabIcon emoji="📋" focused={focused} />,
+          tabBarIcon: ({ color, size }) => <MaterialIcons name="receipt" size={24} color={color} />,
         }}
       />
       <Tabs.Screen
         name="search"
         options={{
           title: 'Search',
-          tabBarIcon: ({ focused }) => <TabIcon emoji="🔍" focused={focused} />,
+          tabBarIcon: ({ color, size }) => <MaterialIcons name="search" size={24} color={color} />,
         }}
       />
       <Tabs.Screen
         name="reports"
         options={{
           title: 'Reports',
-          tabBarIcon: ({ focused }) => <TabIcon emoji="📊" focused={focused} />,
+          tabBarIcon: ({ color, size }) => <MaterialIcons name="assessment" size={24} color={color} />,
         }}
       />
     </Tabs>

@@ -52,7 +52,8 @@ function RootLayoutContent() {
         <Stack.Screen name="onboarding" options={{ headerShown: false }} />
         <Stack.Screen name="login" options={{ headerShown: false }} />
         <Stack.Screen name="profile" options={{ title: 'Profile & Settings', headerBackTitle: 'Back' }} />
-        <Stack.Screen name="appointments" options={{ title: 'Book Appointment', headerBackTitle: 'Back' }} />
+        <Stack.Screen name="appointments/index" options={{ title: 'Upcoming Trials', headerBackTitle: 'Back' }} />
+        <Stack.Screen name="appointments/book" options={{ title: 'Schedule Appointment', headerBackTitle: 'Back' }} />
         <Stack.Screen name="customer/[id]" options={{ title: 'Customer Details', headerBackTitle: 'Back' }} />
         <Stack.Screen name="customer/new" options={{ title: 'New Customer', headerBackTitle: 'Back' }} />
         <Stack.Screen name="order/[id]" options={{ title: 'Order Details', headerBackTitle: 'Back' }} />

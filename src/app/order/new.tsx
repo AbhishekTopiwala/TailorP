@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, Text, View, ScrollView, TouchableOpacity, TextInput, Alert, useColorScheme, KeyboardAvoidingView, Platform, Keyboard } from 'react-native';
+import { StyleSheet, Text, View, ScrollView, TouchableOpacity, TextInput, Alert, useColorScheme, KeyboardAvoidingView, Platform, Keyboard, Modal } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, Stack } from 'expo-router';
 import { Colors } from '@/constants/theme';
 import { useAppStore, GarmentType } from '@/store/AppStore';
 import { MaterialIcons } from '@expo/vector-icons';
+import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 
 const GARMENT_TYPES: GarmentType[] = ['Shirt', 'Pant', 'Kurta', 'Blazer', 'Sherwani', 'Blouse', 'Lehenga', 'Kids Wear', 'Custom'];
 
@@ -58,6 +59,26 @@ export default function NewOrderScreen() {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [focusedInput, setFocusedInput] = useState<string | null>(null);
   const [keyboardVisible, setKeyboardVisible] = useState(false);
+  const [showDatePicker, setShowDatePicker] = useState(false);
+
+  const handleDateChange = (event: DateTimePickerEvent, selectedDate?: Date) => {
+    if (Platform.OS === 'android') {
+      setShowDatePicker(false);
+    }
+    if (selectedDate) {
+      const year = selectedDate.getFullYear();
+      const month = String(selectedDate.getMonth() + 1).padStart(2, '0');
+      const day = String(selectedDate.getDate()).padStart(2, '0');
+      setDeliveryDate(`${year}-${month}-${day}`);
+      if (errors.deliveryDate) {
+        setErrors(prev => {
+          const copy = { ...prev };
+          delete copy.deliveryDate;
+          return copy;
+        });
+      }
+    }
+  };
 
   useEffect(() => {
     const showSub = Keyboard.addListener('keyboardDidShow', () => setKeyboardVisible(true));
@@ -423,23 +444,97 @@ export default function NewOrderScreen() {
               </View>
 
               <Text style={[s.fieldLabel, { color: colors.text }]}>Delivery Date *</Text>
-              <TextInput
-                style={[
-                  s.input,
-                  {
-                    backgroundColor: colors.backgroundElement,
-                    color: colors.text,
-                    borderColor: errors.deliveryDate ? colors.error : (focusedInput === 'deliveryDate' ? colors.borderFocus : colors.border)
-                  }
-                ]}
-                placeholder="YYYY-MM-DD"
-                placeholderTextColor={colors.placeholder}
-                value={deliveryDate}
-                onChangeText={setDeliveryDate}
-                onFocus={() => setFocusedInput('deliveryDate')}
-                onBlur={() => setFocusedInput(null)}
-              />
+              {Platform.OS === 'web' ? (
+                <TextInput
+                  style={[
+                    s.input,
+                    {
+                      backgroundColor: colors.backgroundElement,
+                      color: colors.text,
+                      borderColor: errors.deliveryDate ? colors.error : (focusedInput === 'deliveryDate' ? colors.borderFocus : colors.border)
+                    }
+                  ]}
+                  placeholder="YYYY-MM-DD"
+                  placeholderTextColor={colors.placeholder}
+                  value={deliveryDate}
+                  onChangeText={setDeliveryDate}
+                  onFocus={() => setFocusedInput('deliveryDate')}
+                  onBlur={() => setFocusedInput(null)}
+                />
+              ) : (
+                <TouchableOpacity
+                  style={[
+                    s.input,
+                    {
+                      backgroundColor: colors.backgroundElement,
+                      borderColor: errors.deliveryDate ? colors.error : (showDatePicker ? colors.borderFocus : colors.border),
+                      flexDirection: 'row',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      paddingHorizontal: 16,
+                    }
+                  ]}
+                  onPress={() => {
+                    Keyboard.dismiss();
+                    setShowDatePicker(true);
+                  }}
+                  activeOpacity={0.7}
+                >
+                  <Text style={{ color: deliveryDate ? colors.text : colors.placeholder, fontSize: 15 }}>
+                    {deliveryDate ? deliveryDate : 'Select Date'}
+                  </Text>
+                  <MaterialIcons name="calendar-today" size={20} color={colors.primary} />
+                </TouchableOpacity>
+              )}
               {errors.deliveryDate && <Text style={{ color: colors.error, fontSize: 11, marginTop: 4 }}>{errors.deliveryDate}</Text>}
+
+              {showDatePicker && Platform.OS === 'android' && (
+                <DateTimePicker
+                  value={deliveryDate ? (() => {
+                    const parsed = new Date(deliveryDate);
+                    return isNaN(parsed.getTime()) ? new Date() : parsed;
+                  })() : new Date()}
+                  mode="date"
+                  display="default"
+                  minimumDate={new Date()}
+                  onChange={handleDateChange}
+                />
+              )}
+
+              {showDatePicker && Platform.OS === 'ios' && (
+                <Modal
+                  transparent
+                  animationType="fade"
+                  visible={showDatePicker}
+                  onRequestClose={() => setShowDatePicker(false)}
+                >
+                  <TouchableOpacity 
+                    style={s.modalOverlay} 
+                    activeOpacity={1} 
+                    onPress={() => setShowDatePicker(false)}
+                  >
+                    <View style={[s.pickerModalContainer, { backgroundColor: colors.surface }]}>
+                      <View style={[s.pickerHeader, { borderBottomColor: colors.divider }]}>
+                        <Text style={[s.pickerHeaderTitle, { color: colors.text }]}>Select Delivery Date</Text>
+                        <TouchableOpacity onPress={() => setShowDatePicker(false)}>
+                          <Text style={{ color: colors.primary, fontWeight: '700', fontSize: 15 }}>Done</Text>
+                        </TouchableOpacity>
+                      </View>
+                      <DateTimePicker
+                        value={deliveryDate ? (() => {
+                          const parsed = new Date(deliveryDate);
+                          return isNaN(parsed.getTime()) ? new Date() : parsed;
+                        })() : new Date()}
+                        mode="date"
+                        display="inline"
+                        minimumDate={new Date()}
+                        onChange={handleDateChange}
+                        style={{ backgroundColor: colors.surface }}
+                      />
+                    </View>
+                  </TouchableOpacity>
+                </Modal>
+              )}
 
               <Text style={[s.fieldLabel, { color: colors.text }]}>Priority</Text>
               <View style={s.priorityRow}>
@@ -581,4 +676,28 @@ const s = StyleSheet.create({
   backBtn: { borderWidth: 1 },
   nextBtn: {},
   navBtnTxt: { fontSize: 15, fontWeight: '700' },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.4)',
+    justifyContent: 'flex-end',
+  },
+  pickerModalContainer: {
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    paddingHorizontal: 20,
+    paddingBottom: 40,
+    paddingTop: 10,
+  },
+  pickerHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 14,
+    borderBottomWidth: 1,
+    marginBottom: 10,
+  },
+  pickerHeaderTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
 });

@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, Text, View, ScrollView, TouchableOpacity, TextInput, Alert, useColorScheme, KeyboardAvoidingView, Platform, Keyboard } from 'react-native';
+import { StyleSheet, Text, View, ScrollView, TouchableOpacity, TextInput, Alert, useColorScheme, KeyboardAvoidingView, Platform, Keyboard, Modal } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, Stack } from 'expo-router';
 import { Colors } from '@/constants/theme';
 import { useAppStore } from '@/store/AppStore';
 import { MaterialIcons } from '@expo/vector-icons';
+import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 
 const TIME_SLOTS = [
   '09:00 AM', '10:00 AM', '11:00 AM', '12:00 PM',
@@ -45,6 +46,19 @@ export default function BookAppointmentScreen() {
   });
 
   const [selectedDate, setSelectedDate] = useState(daysList[0].fullString);
+  const [showDatePicker, setShowDatePicker] = useState(false);
+
+  const handleDateChange = (event: DateTimePickerEvent, selectedDate?: Date) => {
+    if (Platform.OS === 'android') {
+      setShowDatePicker(false);
+    }
+    if (selectedDate) {
+      const year = selectedDate.getFullYear();
+      const month = String(selectedDate.getMonth() + 1).padStart(2, '0');
+      const day = String(selectedDate.getDate()).padStart(2, '0');
+      setSelectedDate(`${year}-${month}-${day}`);
+    }
+  };
 
   function handleBook() {
     const customer = customers.find(c => c.id === selectedCustomerId);
@@ -92,7 +106,7 @@ export default function BookAppointmentScreen() {
           <Text style={[s.sectionTitle, { color: colors.textSecondary }]}>SELECT DATE</Text>
         </View>
         
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={s.dateStrip} contentContainerStyle={{ paddingRight: 24 }}>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={s.dateStrip} contentContainerStyle={{ paddingRight: 24, alignItems: 'center' }}>
           {daysList.map((day) => {
             const isSelected = selectedDate === day.fullString;
             return (
@@ -115,7 +129,57 @@ export default function BookAppointmentScreen() {
               </TouchableOpacity>
             );
           })}
+
+          {Platform.OS !== 'web' && (() => {
+            const isCustomDate = !daysList.some(day => day.fullString === selectedDate);
+            const customDateDisplay = isCustomDate 
+              ? (() => {
+                  const d = new Date(selectedDate);
+                  return isNaN(d.getTime()) ? 'Choose' : d.toLocaleDateString('en-US', { day: 'numeric', month: 'short' });
+                })()
+              : 'Choose';
+
+            return (
+              <TouchableOpacity
+                style={[
+                  s.dateCard,
+                  { backgroundColor: colors.backgroundElement, borderColor: colors.border },
+                  isCustomDate && [s.dateCardSelected, { backgroundColor: colors.primary, borderColor: colors.primary }]
+                ]}
+                onPress={() => setShowDatePicker(true)}
+                activeOpacity={0.8}
+              >
+                <MaterialIcons 
+                  name="calendar-today" 
+                  size={18} 
+                  color={isCustomDate ? colors.onPrimary : colors.textSecondary} 
+                  style={{ marginBottom: 4 }}
+                />
+                <Text style={[s.dayName, { color: isCustomDate ? colors.onPrimary : colors.text, fontSize: 10, fontWeight: '700' }]}>
+                  {customDateDisplay}
+                </Text>
+              </TouchableOpacity>
+            );
+          })()}
         </ScrollView>
+
+        {Platform.OS === 'web' && (
+          <View style={{ marginTop: 8, marginBottom: 16 }}>
+            <TextInput
+              style={[
+                s.webDateInput,
+                {
+                  backgroundColor: colors.backgroundElement,
+                  color: colors.text,
+                  borderColor: colors.border,
+                }
+              ]}
+              placeholder="YYYY-MM-DD"
+              value={selectedDate}
+              onChangeText={setSelectedDate}
+            />
+          </View>
+        )}
 
         {/* Time Slot Grid */}
         <View style={s.sectionHeaderRow}>
@@ -231,6 +295,54 @@ export default function BookAppointmentScreen() {
           </View>
         </TouchableOpacity>
         </ScrollView>
+
+        {showDatePicker && Platform.OS === 'android' && (
+          <DateTimePicker
+            value={(() => {
+              const parsed = new Date(selectedDate);
+              return isNaN(parsed.getTime()) ? new Date() : parsed;
+            })()}
+            mode="date"
+            display="default"
+            minimumDate={new Date()}
+            onChange={handleDateChange}
+          />
+        )}
+
+        {showDatePicker && Platform.OS === 'ios' && (
+          <Modal
+            transparent
+            animationType="fade"
+            visible={showDatePicker}
+            onRequestClose={() => setShowDatePicker(false)}
+          >
+            <TouchableOpacity 
+              style={s.modalOverlay} 
+              activeOpacity={1} 
+              onPress={() => setShowDatePicker(false)}
+            >
+              <View style={[s.pickerModalContainer, { backgroundColor: colors.surface }]}>
+                <View style={[s.pickerHeader, { borderBottomColor: colors.divider }]}>
+                  <Text style={[s.pickerHeaderTitle, { color: colors.text }]}>Select Trial Date</Text>
+                  <TouchableOpacity onPress={() => setShowDatePicker(false)}>
+                    <Text style={{ color: colors.primary, fontWeight: '700', fontSize: 15 }}>Done</Text>
+                  </TouchableOpacity>
+                </View>
+                <DateTimePicker
+                  value={(() => {
+                    const parsed = new Date(selectedDate);
+                    return isNaN(parsed.getTime()) ? new Date() : parsed;
+                  })()}
+                  mode="date"
+                  display="inline"
+                  minimumDate={new Date()}
+                  onChange={handleDateChange}
+                  style={{ backgroundColor: colors.surface }}
+                />
+              </View>
+            </TouchableOpacity>
+          </Modal>
+        )}
       </KeyboardAvoidingView>
     </>
   );
@@ -377,5 +489,36 @@ const s = StyleSheet.create({
   bookBtnTxt: {
     fontSize: 15,
     fontWeight: '700',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.4)',
+    justifyContent: 'flex-end',
+  },
+  pickerModalContainer: {
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    paddingHorizontal: 20,
+    paddingBottom: 40,
+    paddingTop: 10,
+  },
+  pickerHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 14,
+    borderBottomWidth: 1,
+    marginBottom: 10,
+  },
+  pickerHeaderTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  webDateInput: {
+    borderWidth: 1,
+    borderRadius: 14,
+    paddingHorizontal: 16,
+    fontSize: 15,
+    height: 52,
   },
 });

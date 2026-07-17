@@ -9,7 +9,7 @@ import { MaterialIcons } from '@expo/vector-icons';
 export default function ProfileScreen() {
   const scheme = useColorScheme();
   const colors = Colors[scheme === 'dark' ? 'dark' : 'light'];
-  const { userSession, logout, updateUserSession, customers, orders, storagePermissionGranted, requestStoragePermission, showAlert } = useAppStore();
+  const { userSession, logout, updateUserSession, customers, orders, storagePermissionGranted, requestStoragePermission, showAlert, seedSampleData } = useAppStore();
 
   const [isEditing, setIsEditing] = useState(false);
   const [name, setName] = useState(userSession.name);
@@ -82,6 +82,11 @@ export default function ProfileScreen() {
     setShopName(userSession.shopName || '');
     setErrors({});
     setIsEditing(true);
+  }
+
+  function handleSeed() {
+    seedSampleData();
+    showAlert('Success', 'Seeded 5 sample customers, orders, and trial bookings successfully!');
   }
 
   function handleLogout() {
@@ -278,6 +283,18 @@ export default function ProfileScreen() {
           </View>
         )}
 
+        {/* Seed Sample Customers Button */}
+        <TouchableOpacity
+          style={[s.seedBtn, { borderColor: colors.primary }]}
+          onPress={handleSeed}
+          activeOpacity={0.7}
+        >
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+            <MaterialIcons name="playlist-add" size={20} color={colors.primary} />
+            <Text style={[s.seedBtnTxt, { color: colors.primary }]}>Seed 5 Sample Customers & Orders</Text>
+          </View>
+        </TouchableOpacity>
+
         {/* Logout CTA */}
         <TouchableOpacity
           style={[s.logoutBtn, { backgroundColor: colors.error }]}
@@ -464,6 +481,19 @@ const s = StyleSheet.create({
   },
   logoutBtnTxt: {
     color: '#FFFFFF',
+    fontSize: 15,
+    fontWeight: '700',
+  },
+  seedBtn: {
+    height: 52,
+    borderRadius: 26,
+    borderWidth: 1.5,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 16,
+    marginBottom: 8,
+  },
+  seedBtnTxt: {
     fontSize: 15,
     fontWeight: '700',
   },

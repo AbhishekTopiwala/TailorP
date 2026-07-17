@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { StyleSheet, Text, View, ScrollView, TouchableOpacity, TextInput, Alert, useColorScheme, KeyboardAvoidingView, Platform } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { StyleSheet, Text, View, ScrollView, TouchableOpacity, TextInput, Alert, useColorScheme, KeyboardAvoidingView, Platform, Keyboard } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, Stack } from 'expo-router';
 import { Colors } from '@/constants/theme';
@@ -21,6 +21,16 @@ export default function AppointmentsScreen() {
   const [notes, setNotes] = useState('');
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [focusedInput, setFocusedInput] = useState<string | null>(null);
+  const [keyboardVisible, setKeyboardVisible] = useState(false);
+
+  useEffect(() => {
+    const showSub = Keyboard.addListener('keyboardDidShow', () => setKeyboardVisible(true));
+    const hideSub = Keyboard.addListener('keyboardDidHide', () => setKeyboardVisible(false));
+    return () => {
+      showSub.remove();
+      hideSub.remove();
+    };
+  }, []);
 
   // Generate next 7 days for horizontal selector
   const daysList = Array.from({ length: 7 }, (_, i) => {
@@ -70,11 +80,11 @@ export default function AppointmentsScreen() {
         }}
       />
       <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'padding'}
         style={{ flex: 1 }}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 60}
       >
-        <ScrollView style={{ backgroundColor: colors.background }} contentContainerStyle={s.container} showsVerticalScrollIndicator={false}>
+        <ScrollView style={{ backgroundColor: colors.background }} contentContainerStyle={[s.container, { paddingBottom: keyboardVisible ? 120 : 48 }]} showsVerticalScrollIndicator={false}>
         {/* Date Strip */}
         <View style={s.sectionHeaderRow}>
           <MaterialIcons name="event" size={16} color={colors.textSecondary} />
@@ -228,7 +238,6 @@ export default function AppointmentsScreen() {
 const s = StyleSheet.create({
   container: {
     padding: 24,
-    paddingBottom: 48,
   },
   sectionHeaderRow: { 
     flexDirection: 'row', 

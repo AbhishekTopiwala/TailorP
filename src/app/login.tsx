@@ -80,9 +80,9 @@ export default function LoginScreen() {
   return (
     <SafeAreaView style={[s.container, { backgroundColor: colors.background }]}>
       <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'padding'}
         style={{ flex: 1 }}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 60}
       >
         <ScrollView contentContainerStyle={s.scrollContent} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
           {/* Designer Brand Icon */}
@@ -235,7 +235,7 @@ const s = StyleSheet.create({
   scrollContent: {
     padding: 24,
     paddingTop: 36,
-    paddingBottom: 80,
+    paddingBottom: 120,
     flexGrow: 1,
     justifyContent: 'center',
   },

@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { StyleSheet, Text, View, ScrollView, TouchableOpacity, Alert, useColorScheme, Modal, TextInput, KeyboardAvoidingView, Platform } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { StyleSheet, Text, View, ScrollView, TouchableOpacity, Alert, useColorScheme, Modal, TextInput, KeyboardAvoidingView, Platform, Keyboard } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, router, Stack } from 'expo-router';
 import { Colors } from '@/constants/theme';
@@ -42,6 +42,16 @@ export default function OrderDetailScreen() {
   const [payNote, setPayNote] = useState('');
   const [focusedInput, setFocusedInput] = useState<string | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [keyboardVisible, setKeyboardVisible] = useState(false);
+
+  useEffect(() => {
+    const showSub = Keyboard.addListener('keyboardDidShow', () => setKeyboardVisible(true));
+    const hideSub = Keyboard.addListener('keyboardDidHide', () => setKeyboardVisible(false));
+    return () => {
+      showSub.remove();
+      hideSub.remove();
+    };
+  }, []);
 
   function handleAmountChange(v: string) {
     setPayAmount(v);
@@ -391,10 +401,11 @@ export default function OrderDetailScreen() {
           </View>
 
           <KeyboardAvoidingView
-            behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+            behavior={Platform.OS === 'ios' ? 'padding' : 'padding'}
             style={{ flex: 1 }}
+            keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 60}
           >
-            <ScrollView contentContainerStyle={{ padding: 24 }} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+            <ScrollView contentContainerStyle={{ padding: 24, paddingBottom: keyboardVisible ? 120 : 40 }} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
             <View style={[s.balanceCard, { backgroundColor: colors.backgroundElement, borderColor: colors.border }]}>
               <Text style={[s.balLabel, { color: colors.textSecondary }]}>REMAINING BALANCE</Text>
               <Text style={[s.balValue, { color: colors.error }]}>₹{balance.toLocaleString('en-IN')}</Text>

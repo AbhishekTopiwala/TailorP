@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { StyleSheet, Text, View, ScrollView, TouchableOpacity, Alert, useColorScheme, TextInput, Modal, KeyboardAvoidingView, Platform } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { StyleSheet, Text, View, ScrollView, TouchableOpacity, Alert, useColorScheme, TextInput, Modal, KeyboardAvoidingView, Platform, Keyboard } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, router, Stack } from 'expo-router';
 import { Colors } from '@/constants/theme';
@@ -22,6 +22,16 @@ export default function CustomerDetailScreen() {
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [focusedInput, setFocusedInput] = useState<string | null>(null);
+  const [keyboardVisible, setKeyboardVisible] = useState(false);
+
+  useEffect(() => {
+    const showSub = Keyboard.addListener('keyboardDidShow', () => setKeyboardVisible(true));
+    const hideSub = Keyboard.addListener('keyboardDidHide', () => setKeyboardVisible(false));
+    return () => {
+      showSub.remove();
+      hideSub.remove();
+    };
+  }, []);
 
   if (!customer || !customer.isActive) {
     return (
@@ -252,10 +262,11 @@ export default function CustomerDetailScreen() {
             </TouchableOpacity>
           </View>
           <KeyboardAvoidingView
-            behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+            behavior={Platform.OS === 'ios' ? 'padding' : 'padding'}
             style={{ flex: 1 }}
+            keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 60}
           >
-            <ScrollView contentContainerStyle={{ padding: 24 }} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+            <ScrollView contentContainerStyle={{ padding: 24, paddingBottom: keyboardVisible ? 120 : 40 }} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
             <Field
               label="Full Name"
               value={editForm.name}

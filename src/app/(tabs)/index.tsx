@@ -88,7 +88,7 @@ export default function DashboardScreen() {
             activeOpacity={0.7}
           >
             <MaterialIcons name="person-add" size={20} color={colors.primary} />
-            <Text style={[s.quickActionTxt, { color: colors.text }]}>Add Client</Text>
+            <Text style={[s.quickActionTxt, { color: colors.text }]}>New Customer</Text>
           </TouchableOpacity>
           
           <TouchableOpacity

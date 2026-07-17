@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { StyleSheet, Text, View, Image, TouchableOpacity, TextInput, useColorScheme, ScrollView, Alert } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { StyleSheet, Text, View, Image, TouchableOpacity, TextInput, useColorScheme, ScrollView, Alert, KeyboardAvoidingView, Platform, Keyboard } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, Stack } from 'expo-router';
 import { Colors } from '@/constants/theme';
@@ -16,6 +16,16 @@ export default function ProfileScreen() {
   const [shopName, setShopName] = useState(userSession.shopName || '');
   const [focusedInput, setFocusedInput] = useState<'name' | 'shop' | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [keyboardVisible, setKeyboardVisible] = useState(false);
+
+  useEffect(() => {
+    const showSub = Keyboard.addListener('keyboardDidShow', () => setKeyboardVisible(true));
+    const hideSub = Keyboard.addListener('keyboardDidHide', () => setKeyboardVisible(false));
+    return () => {
+      showSub.remove();
+      hideSub.remove();
+    };
+  }, []);
 
   function validate() {
     const errs: Record<string, string> = {};
@@ -92,7 +102,12 @@ export default function ProfileScreen() {
           headerTitleStyle: { fontWeight: '700' }
         }}
       />
-      <ScrollView style={{ backgroundColor: colors.background }} contentContainerStyle={s.container} showsVerticalScrollIndicator={false}>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'padding'}
+        style={{ flex: 1 }}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 60}
+      >
+        <ScrollView style={{ backgroundColor: colors.background }} contentContainerStyle={[s.container, { paddingBottom: keyboardVisible ? 120 : 40 }]} showsVerticalScrollIndicator={false}>
         {/* Header Profile Section */}
         <View style={[s.profileCard, { backgroundColor: colors.backgroundElement, borderColor: colors.border }]}>
           <View style={s.avatarWrapper}>
@@ -274,7 +289,8 @@ export default function ProfileScreen() {
             <Text style={s.logoutBtnTxt}>Sign Out</Text>
           </View>
         </TouchableOpacity>
-      </ScrollView>
+        </ScrollView>
+      </KeyboardAvoidingView>
     </>
   );
 }
@@ -282,7 +298,6 @@ export default function ProfileScreen() {
 const s = StyleSheet.create({
   container: {
     padding: 24,
-    paddingBottom: 48,
   },
   profileCard: {
     alignItems: 'center',

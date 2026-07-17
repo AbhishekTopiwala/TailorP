@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { StyleSheet, Text, View, ScrollView, TouchableOpacity, FlatList, TextInput, Alert, useColorScheme, Modal, KeyboardAvoidingView, Platform } from 'react-native';
+import { StyleSheet, Text, View, TouchableOpacity, FlatList, TextInput, Alert, useColorScheme } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { Colors } from '@/constants/theme';
@@ -9,13 +9,9 @@ import { MaterialIcons } from '@expo/vector-icons';
 export default function CustomersScreen() {
   const scheme = useColorScheme();
   const colors = Colors[scheme === 'dark' ? 'dark' : 'light'];
-  const { customers, orders, addCustomer, deleteCustomer, showAlert } = useAppStore();
+  const { customers, orders, deleteCustomer, showAlert } = useAppStore();
 
   const [search, setSearch] = useState('');
-  const [showForm, setShowForm] = useState(false);
-  const [form, setForm] = useState({ name: '', phone: '', address: '', gender: 'Male' as 'Male' | 'Female' | 'Other' });
-  const [formError, setFormError] = useState('');
-  const [focusedInput, setFocusedInput] = useState<string | null>(null);
 
   const activeCustomers = customers.filter(c => c.isActive);
   const filtered = activeCustomers.filter(c =>
@@ -24,14 +20,7 @@ export default function CustomersScreen() {
     c.displayCode.toLowerCase().includes(search.toLowerCase())
   );
 
-  function handleSave() {
-    if (!form.name.trim()) { setFormError('Name is required'); return; }
-    if (!form.phone.trim() || form.phone.length < 10) { setFormError('Valid phone number required'); return; }
-    addCustomer({ name: form.name.trim(), phone: form.phone.trim(), address: form.address.trim(), gender: form.gender });
-    setForm({ name: '', phone: '', address: '', gender: 'Male' });
-    setFormError('');
-    setShowForm(false);
-  }
+
 
   function handleDelete(customer: Customer) {
     showAlert('Delete Customer', `Remove ${customer.name}? Their orders will remain.`, [
@@ -168,134 +157,11 @@ export default function CustomersScreen() {
       {/* Floating Action Button (FAB) */}
       <TouchableOpacity
         style={[s.fab, { backgroundColor: colors.primary, shadowColor: colors.primary }]}
-        onPress={() => setShowForm(true)}
+        onPress={() => router.push('/customer/new')}
         activeOpacity={0.8}
       >
         <MaterialIcons name="add" size={28} color={colors.onPrimary} />
       </TouchableOpacity>
-
-      {/* Add Customer Modal */}
-      <Modal visible={showForm} animationType="slide" presentationStyle="pageSheet">
-        <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
-          <View style={[s.modalHeader, { borderBottomColor: colors.divider }]}>
-            <TouchableOpacity onPress={() => { setShowForm(false); setFormError(''); }} activeOpacity={0.7} style={s.modalHeaderBtn}>
-              <Text style={{ color: colors.textSecondary, fontSize: 16 }}>Cancel</Text>
-            </TouchableOpacity>
-            <Text style={[s.modalTitle, { color: colors.text }]}>Add New Client</Text>
-            <TouchableOpacity onPress={handleSave} activeOpacity={0.7} style={s.modalHeaderBtn}>
-              <Text style={{ color: colors.primary, fontSize: 16, fontWeight: '700' }}>Save</Text>
-            </TouchableOpacity>
-          </View>
-
-          <KeyboardAvoidingView
-            behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-            style={{ flex: 1 }}
-          >
-            <ScrollView contentContainerStyle={{ padding: 24 }} keyboardShouldPersistTaps="handled">
-            {formError ? (
-              <View style={[s.errorContainer, { backgroundColor: colors.error + '10' }]}>
-                <MaterialIcons name="error-outline" size={16} color={colors.error} />
-                <Text style={[s.error, { color: colors.error }]}>{formError}</Text>
-              </View>
-            ) : null}
-
-            <FieldGroup label="FULL NAME *" colors={colors}>
-              <TextInput
-                style={[
-                  s.input,
-                  {
-                    backgroundColor: colors.backgroundElement,
-                    color: colors.text,
-                    borderColor: focusedInput === 'name' ? colors.borderFocus : 'transparent',
-                    borderWidth: focusedInput === 'name' ? 1.5 : 0
-                  }
-                ]}
-                placeholder="e.g. Ramesh Sharma"
-                placeholderTextColor={colors.placeholder}
-                value={form.name}
-                onChangeText={v => setForm(f => ({ ...f, name: v }))}
-                onFocus={() => setFocusedInput('name')}
-                onBlur={() => setFocusedInput(null)}
-              />
-            </FieldGroup>
-
-            <FieldGroup label="PHONE NUMBER *" colors={colors}>
-              <TextInput
-                style={[
-                  s.input,
-                  {
-                    backgroundColor: colors.backgroundElement,
-                    color: colors.text,
-                    borderColor: focusedInput === 'phone' ? colors.borderFocus : 'transparent',
-                    borderWidth: focusedInput === 'phone' ? 1.5 : 0
-                  }
-                ]}
-                placeholder="e.g. 9876543210"
-                placeholderTextColor={colors.placeholder}
-                keyboardType="phone-pad"
-                value={form.phone}
-                onChangeText={v => setForm(f => ({ ...f, phone: v }))}
-                onFocus={() => setFocusedInput('phone')}
-                onBlur={() => setFocusedInput(null)}
-              />
-            </FieldGroup>
-
-            <FieldGroup label="ADDRESS" colors={colors}>
-              <TextInput
-                style={[
-                  s.input,
-                  s.multiline,
-                  {
-                    backgroundColor: colors.backgroundElement,
-                    color: colors.text,
-                    borderColor: focusedInput === 'address' ? colors.borderFocus : 'transparent',
-                    borderWidth: focusedInput === 'address' ? 1.5 : 0
-                  }
-                ]}
-                placeholder="Street, Area, City..."
-                placeholderTextColor={colors.placeholder}
-                multiline
-                value={form.address}
-                onChangeText={v => setForm(f => ({ ...f, address: v }))}
-                onFocus={() => setFocusedInput('address')}
-                onBlur={() => setFocusedInput(null)}
-              />
-            </FieldGroup>
-
-            <FieldGroup label="GENDER" colors={colors}>
-              <View style={s.genderRow}>
-                {(['Male', 'Female', 'Other'] as const).map(g => {
-                  const isSelected = form.gender === g;
-                  return (
-                    <TouchableOpacity
-                      key={g}
-                      style={[
-                        s.genderBtn,
-                        {
-                          backgroundColor: isSelected ? colors.primary : colors.backgroundElement,
-                        }
-                      ]}
-                      onPress={() => setForm(f => ({ ...f, gender: g }))}
-                      activeOpacity={0.8}
-                    >
-                      <Text style={[s.genderTxt, { color: isSelected ? colors.onPrimary : colors.text }]}>{g}</Text>
-                    </TouchableOpacity>
-                  );
-                })}
-              </View>
-            </FieldGroup>
-
-            <TouchableOpacity
-              style={[s.saveFullBtn, { backgroundColor: colors.primary }]}
-              onPress={handleSave}
-              activeOpacity={0.85}
-            >
-              <Text style={[s.saveFullTxt, { color: colors.onPrimary }]}>Save Client</Text>
-            </TouchableOpacity>
-            </ScrollView>
-          </KeyboardAvoidingView>
-        </SafeAreaView>
-      </Modal>
     </SafeAreaView>
   );
 }

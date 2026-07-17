@@ -15,8 +15,9 @@ export default function AppointmentsScreen() {
   const scheme = useColorScheme();
   const colors = Colors[scheme === 'dark' ? 'dark' : 'light'];
   const { customers, addAppointment, showAlert } = useAppStore();
+  const activeCustomers = customers.filter(c => c.isActive);
 
-  const [selectedCustomerId, setSelectedCustomerId] = useState(customers[0]?.id || '');
+  const [selectedCustomerId, setSelectedCustomerId] = useState(activeCustomers[0]?.id || '');
   const [selectedTimeSlot, setSelectedTimeSlot] = useState('10:00 AM');
   const [notes, setNotes] = useState('');
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -175,7 +176,7 @@ export default function AppointmentsScreen() {
           {isDropdownOpen && (
             <View style={[s.dropdownList, { backgroundColor: colors.backgroundElement, borderColor: colors.border }]}>
               <ScrollView nestedScrollEnabled style={{ maxHeight: 180 }}>
-                {customers.map((c) => (
+                {activeCustomers.map((c) => (
                   <TouchableOpacity
                     key={c.id}
                     style={[s.dropdownItem, { borderBottomColor: colors.divider }]}

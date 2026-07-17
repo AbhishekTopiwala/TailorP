@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { StyleSheet, Text, View, ScrollView, TouchableOpacity, Alert, useColorScheme, Modal, TextInput } from 'react-native';
+import { StyleSheet, Text, View, ScrollView, TouchableOpacity, Alert, useColorScheme, Modal, TextInput, KeyboardAvoidingView, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, router, Stack } from 'expo-router';
 import { Colors } from '@/constants/theme';
@@ -34,7 +34,7 @@ export default function OrderDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const scheme = useColorScheme();
   const colors = Colors[scheme === 'dark' ? 'dark' : 'light'];
-  const { orders, customers, updateOrderStatus, addPayment, deleteOrder } = useAppStore();
+  const { orders, customers, updateOrderStatus, addPayment, deleteOrder, showAlert } = useAppStore();
 
   const [payModal, setPayModal] = useState(false);
   const [payAmount, setPayAmount] = useState('');
@@ -92,9 +92,9 @@ export default function OrderDetailScreen() {
   const currentStatusIdx = STATUS_FLOW.indexOf(confirmedOrder.status);
 
   function handleSetStatus(targetStatus: OrderStatus) {
-    Alert.alert(`Change Status?`, `Do you want to update status to "${targetStatus}"?`, [
+    showAlert(`Change Status?`, `Do you want to update status to "${targetStatus}"?`, [
       { text: 'Cancel', style: 'cancel' },
-      { text: 'Yes, Update', onPress: () => updateOrderStatus(confirmedOrder.id, targetStatus) }
+      { text: 'Yes, Update', style: 'default', onPress: () => updateOrderStatus(confirmedOrder.id, targetStatus) }
     ]);
   }
 
@@ -131,7 +131,7 @@ export default function OrderDetailScreen() {
   }
 
   function handleDelete() {
-    Alert.alert('Delete Order', `Delete order ${confirmedOrder.orderNumber}? This cannot be undone.`, [
+    showAlert('Delete Order', `Delete order ${confirmedOrder.orderNumber}? This cannot be undone.`, [
       { text: 'Cancel', style: 'cancel' },
       { text: 'Delete', style: 'destructive', onPress: () => { deleteOrder(confirmedOrder.id); router.back(); } }
     ]);
@@ -390,7 +390,11 @@ export default function OrderDetailScreen() {
             </TouchableOpacity>
           </View>
 
-          <ScrollView contentContainerStyle={{ padding: 24 }} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+          <KeyboardAvoidingView
+            behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+            style={{ flex: 1 }}
+          >
+            <ScrollView contentContainerStyle={{ padding: 24 }} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
             <View style={[s.balanceCard, { backgroundColor: colors.backgroundElement, borderColor: colors.border }]}>
               <Text style={[s.balLabel, { color: colors.textSecondary }]}>REMAINING BALANCE</Text>
               <Text style={[s.balValue, { color: colors.error }]}>₹{balance.toLocaleString('en-IN')}</Text>
@@ -475,6 +479,7 @@ export default function OrderDetailScreen() {
               <Text style={{ color: colors.onPrimary, fontSize: 16, fontWeight: '700' }}>✓ Record Payment</Text>
             </TouchableOpacity>
           </ScrollView>
+        </KeyboardAvoidingView>
         </SafeAreaView>
       </Modal>
     </>

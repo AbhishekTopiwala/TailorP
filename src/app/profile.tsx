@@ -9,7 +9,7 @@ import { MaterialIcons } from '@expo/vector-icons';
 export default function ProfileScreen() {
   const scheme = useColorScheme();
   const colors = Colors[scheme === 'dark' ? 'dark' : 'light'];
-  const { userSession, logout, updateUserSession, customers, orders } = useAppStore();
+  const { userSession, logout, updateUserSession, customers, orders, storagePermissionGranted, requestStoragePermission, showAlert } = useAppStore();
 
   const [isEditing, setIsEditing] = useState(false);
   const [name, setName] = useState(userSession.name);
@@ -64,7 +64,7 @@ export default function ProfileScreen() {
     }
     updateUserSession({ name: name.trim(), shopName: userSession.role === 'tailor' ? shopName.trim() : undefined });
     setIsEditing(false);
-    Alert.alert('Success', 'Profile updated successfully.');
+    showAlert('Success', 'Profile updated successfully.');
   }
 
   function startEditing() {
@@ -231,6 +231,23 @@ export default function ProfileScreen() {
                 <Text style={[s.detailLabel, { color: colors.textSecondary }]}>App Sync State</Text>
               </View>
               <Text style={[s.detailValue, { color: colors.success }]}>Online Sync</Text>
+            </View>
+
+            <View style={[s.divider, { backgroundColor: colors.divider }]} />
+            <View style={s.detailRow}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                <MaterialIcons name="storage" size={18} color={colors.textSecondary} />
+                <Text style={[s.detailLabel, { color: colors.textSecondary }]}>Storage Access</Text>
+              </View>
+              {storagePermissionGranted ? (
+                <Text style={[s.detailValue, { color: colors.success }]}>Granted</Text>
+              ) : (
+                <TouchableOpacity onPress={requestStoragePermission} activeOpacity={0.7}>
+                  <Text style={[s.detailValue, { color: colors.error, textDecorationLine: 'underline' }]}>
+                    Denied (Tap to Grant)
+                  </Text>
+                </TouchableOpacity>
+              )}
             </View>
 
             <TouchableOpacity

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { StyleSheet, Text, View, ScrollView, TouchableOpacity, FlatList, TextInput, Alert, useColorScheme, Modal } from 'react-native';
+import { StyleSheet, Text, View, ScrollView, TouchableOpacity, FlatList, TextInput, Alert, useColorScheme, Modal, KeyboardAvoidingView, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { Colors } from '@/constants/theme';
@@ -9,7 +9,7 @@ import { MaterialIcons } from '@expo/vector-icons';
 export default function CustomersScreen() {
   const scheme = useColorScheme();
   const colors = Colors[scheme === 'dark' ? 'dark' : 'light'];
-  const { customers, orders, addCustomer, deleteCustomer } = useAppStore();
+  const { customers, orders, addCustomer, deleteCustomer, showAlert } = useAppStore();
 
   const [search, setSearch] = useState('');
   const [showForm, setShowForm] = useState(false);
@@ -34,7 +34,7 @@ export default function CustomersScreen() {
   }
 
   function handleDelete(customer: Customer) {
-    Alert.alert('Delete Customer', `Remove ${customer.name}? Their orders will remain.`, [
+    showAlert('Delete Customer', `Remove ${customer.name}? Their orders will remain.`, [
       { text: 'Cancel', style: 'cancel' },
       { text: 'Delete', style: 'destructive', onPress: () => deleteCustomer(customer.id) }
     ]);
@@ -187,7 +187,11 @@ export default function CustomersScreen() {
             </TouchableOpacity>
           </View>
 
-          <ScrollView contentContainerStyle={{ padding: 24 }} keyboardShouldPersistTaps="handled">
+          <KeyboardAvoidingView
+            behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+            style={{ flex: 1 }}
+          >
+            <ScrollView contentContainerStyle={{ padding: 24 }} keyboardShouldPersistTaps="handled">
             {formError ? (
               <View style={[s.errorContainer, { backgroundColor: colors.error + '10' }]}>
                 <MaterialIcons name="error-outline" size={16} color={colors.error} />
@@ -288,7 +292,8 @@ export default function CustomersScreen() {
             >
               <Text style={[s.saveFullTxt, { color: colors.onPrimary }]}>Save Client</Text>
             </TouchableOpacity>
-          </ScrollView>
+            </ScrollView>
+          </KeyboardAvoidingView>
         </SafeAreaView>
       </Modal>
     </SafeAreaView>

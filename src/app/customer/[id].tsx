@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { StyleSheet, Text, View, ScrollView, TouchableOpacity, Alert, useColorScheme, TextInput, Modal } from 'react-native';
+import { StyleSheet, Text, View, ScrollView, TouchableOpacity, Alert, useColorScheme, TextInput, Modal, KeyboardAvoidingView, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, router, Stack } from 'expo-router';
 import { Colors } from '@/constants/theme';
@@ -10,7 +10,7 @@ export default function CustomerDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const scheme = useColorScheme();
   const colors = Colors[scheme === 'dark' ? 'dark' : 'light'];
-  const { customers, orders, updateCustomer, deleteCustomer } = useAppStore();
+  const { customers, orders, updateCustomer, deleteCustomer, showAlert } = useAppStore();
 
   const [editing, setEditing] = useState(false);
   const customer = customers.find(c => c.id === id);
@@ -100,7 +100,7 @@ export default function CustomerDetailScreen() {
   }
 
   function handleDelete() {
-    Alert.alert('Delete Customer', `Are you sure you want to remove ${customer?.name}?`, [
+    showAlert('Delete Customer', `Are you sure you want to remove ${customer?.name}?`, [
       { text: 'Cancel', style: 'cancel' },
       { text: 'Delete', style: 'destructive', onPress: () => { deleteCustomer(id); router.back(); } }
     ]);
@@ -251,7 +251,11 @@ export default function CustomerDetailScreen() {
               <Text style={{ color: colors.primary, fontSize: 15, fontWeight: '700' }}>Save</Text>
             </TouchableOpacity>
           </View>
-          <ScrollView contentContainerStyle={{ padding: 24 }} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+          <KeyboardAvoidingView
+            behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+            style={{ flex: 1 }}
+          >
+            <ScrollView contentContainerStyle={{ padding: 24 }} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
             <Field
               label="Full Name"
               value={editForm.name}
@@ -301,7 +305,8 @@ export default function CustomerDetailScreen() {
             >
               <Text style={[s.saveTxt, { color: colors.onPrimary }]}>✓ Save Changes</Text>
             </TouchableOpacity>
-          </ScrollView>
+            </ScrollView>
+          </KeyboardAvoidingView>
         </SafeAreaView>
       </Modal>
     </>

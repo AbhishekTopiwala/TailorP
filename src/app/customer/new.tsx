@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { StyleSheet, Text, View, ScrollView, TouchableOpacity, TextInput, Alert, useColorScheme } from 'react-native';
+import { StyleSheet, Text, View, ScrollView, TouchableOpacity, TextInput, Alert, useColorScheme, KeyboardAvoidingView, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, Stack } from 'expo-router';
 import { Colors } from '@/constants/theme';
@@ -9,7 +9,7 @@ import { MaterialIcons } from '@expo/vector-icons';
 export default function NewCustomerScreen() {
   const scheme = useColorScheme();
   const colors = Colors[scheme === 'dark' ? 'dark' : 'light'];
-  const { addCustomer, customers } = useAppStore();
+  const { addCustomer, customers, showAlert } = useAppStore();
 
   const [form, setForm] = useState({
     name: '', phone: '', altPhone: '',
@@ -77,10 +77,10 @@ export default function NewCustomerScreen() {
       gender: form.gender,
       notes: form.notes.trim()
     });
-    Alert.alert('Customer Added!', `${c.name} has been successfully added.`, [
-      { text: 'Add Order', onPress: () => router.replace(`/order/new?customerId=${c.id}`) },
-      { text: 'View Profile', onPress: () => router.replace(`/customer/${c.id}`) },
-      { text: 'Done', onPress: () => router.back() },
+    showAlert('Customer Added!', `${c.name} has been successfully added.`, [
+      { text: 'Add Order', style: 'default', onPress: () => router.replace(`/order/new?customerId=${c.id}`) },
+      { text: 'View Profile', style: 'default', onPress: () => router.replace(`/customer/${c.id}`) },
+      { text: 'Done', style: 'cancel', onPress: () => router.back() },
     ]);
   }
 
@@ -88,7 +88,12 @@ export default function NewCustomerScreen() {
     <>
       <Stack.Screen options={{ title: 'Add Client' }} />
       <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }} edges={['bottom']}>
-        <ScrollView contentContainerStyle={{ padding: 24, paddingBottom: 40 }} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+          style={{ flex: 1 }}
+          keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
+        >
+          <ScrollView contentContainerStyle={{ padding: 24, paddingBottom: 40 }} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
 
           <View style={[s.iconBox, { backgroundColor: colors.backgroundElement }]}>
             <View style={[s.avatarCircle, { backgroundColor: colors.primary + '10' }]}>
@@ -239,6 +244,7 @@ export default function NewCustomerScreen() {
             </View>
           </TouchableOpacity>
         </ScrollView>
+        </KeyboardAvoidingView>
       </SafeAreaView>
     </>
   );

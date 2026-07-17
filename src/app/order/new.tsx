@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { StyleSheet, Text, View, ScrollView, TouchableOpacity, TextInput, Alert, useColorScheme } from 'react-native';
+import { StyleSheet, Text, View, ScrollView, TouchableOpacity, TextInput, Alert, useColorScheme, KeyboardAvoidingView, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, Stack } from 'expo-router';
 import { Colors } from '@/constants/theme';
@@ -42,7 +42,7 @@ const FABRIC_SWATCHES = [
 export default function NewOrderScreen() {
   const scheme = useColorScheme();
   const colors = Colors[scheme === 'dark' ? 'dark' : 'light'];
-  const { customers, orders, addOrder } = useAppStore();
+  const { customers, orders, addOrder, showAlert } = useAppStore();
 
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const [customerId, setCustomerId] = useState('');
@@ -72,13 +72,13 @@ export default function NewOrderScreen() {
       .filter(o => o.customerId === customerId && o.items.some(i => i.garmentType === garmentType))
       .sort((a, b) => b.orderDate.localeCompare(a.orderDate))[0];
     if (!prev) {
-      Alert.alert('No previous measurements', `We couldn't find any past ${garmentType} orders for this client to auto-fill.`);
+      showAlert('No previous measurements', `We couldn't find any past ${garmentType} orders for this client to auto-fill.`);
       return;
     }
     const prevItem = prev.items.find(i => i.garmentType === garmentType);
     if (prevItem) {
       setMeasurements({ ...prevItem.measurements });
-      Alert.alert('Success', 'Loaded measurements from previous order!');
+      showAlert('Success', 'Loaded measurements from previous order!');
     }
   }
 
@@ -129,8 +129,8 @@ export default function NewOrderScreen() {
       advancePaid: 0,
     });
 
-    Alert.alert('✅ Order Created!', `Order placed for ${selectedCustomer?.name}.`, [
-      { text: 'View Orders', onPress: () => router.push('/(tabs)/orders') }
+    showAlert('✅ Order Created!', `Order placed for ${selectedCustomer?.name}.`, [
+      { text: 'View Orders', style: 'default', onPress: () => router.push('/(tabs)/orders') }
     ]);
   }
 
@@ -151,7 +151,12 @@ export default function NewOrderScreen() {
           <View style={{ height: 3, backgroundColor: colors.primary, width: `${(step / 3) * 100}%` }} />
         </View>
 
-        <ScrollView contentContainerStyle={{ padding: 24 }} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+          style={{ flex: 1 }}
+          keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
+        >
+          <ScrollView contentContainerStyle={{ padding: 24 }} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
           {/* Step 1: Customer Selection */}
           {step === 1 && (
             <View>
@@ -481,6 +486,7 @@ export default function NewOrderScreen() {
             </View>
           )}
         </ScrollView>
+        </KeyboardAvoidingView>
 
         {/* Bottom Nav */}
         <View style={[s.bottomNav, { backgroundColor: colors.background, borderTopColor: colors.divider }]}>

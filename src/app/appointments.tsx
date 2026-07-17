@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { StyleSheet, Text, View, ScrollView, TouchableOpacity, TextInput, Alert, useColorScheme } from 'react-native';
+import { StyleSheet, Text, View, ScrollView, TouchableOpacity, TextInput, Alert, useColorScheme, KeyboardAvoidingView, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, Stack } from 'expo-router';
 import { Colors } from '@/constants/theme';
@@ -14,7 +14,7 @@ const TIME_SLOTS = [
 export default function AppointmentsScreen() {
   const scheme = useColorScheme();
   const colors = Colors[scheme === 'dark' ? 'dark' : 'light'];
-  const { customers, addAppointment } = useAppStore();
+  const { customers, addAppointment, showAlert } = useAppStore();
 
   const [selectedCustomerId, setSelectedCustomerId] = useState(customers[0]?.id || '');
   const [selectedTimeSlot, setSelectedTimeSlot] = useState('10:00 AM');
@@ -38,7 +38,7 @@ export default function AppointmentsScreen() {
   function handleBook() {
     const customer = customers.find(c => c.id === selectedCustomerId);
     if (!customer) {
-      Alert.alert('Error', 'Please select a customer first.');
+      showAlert('Error', 'Please select a customer first.');
       return;
     }
 
@@ -50,7 +50,7 @@ export default function AppointmentsScreen() {
       notes: notes.trim() || undefined,
     });
 
-    Alert.alert('Success', 'Appointment booked successfully!', [
+    showAlert('Success', 'Appointment booked successfully!', [
       { text: 'OK', onPress: () => router.back() }
     ]);
   }
@@ -69,7 +69,12 @@ export default function AppointmentsScreen() {
           headerTitleStyle: { fontWeight: '700' }
         }}
       />
-      <ScrollView style={{ backgroundColor: colors.background }} contentContainerStyle={s.container} showsVerticalScrollIndicator={false}>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        style={{ flex: 1 }}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
+      >
+        <ScrollView style={{ backgroundColor: colors.background }} contentContainerStyle={s.container} showsVerticalScrollIndicator={false}>
         {/* Date Strip */}
         <View style={s.sectionHeaderRow}>
           <MaterialIcons name="event" size={16} color={colors.textSecondary} />
@@ -214,7 +219,8 @@ export default function AppointmentsScreen() {
             <Text style={[s.bookBtnTxt, { color: colors.onPrimary }]}>Confirm Appointment</Text>
           </View>
         </TouchableOpacity>
-      </ScrollView>
+        </ScrollView>
+      </KeyboardAvoidingView>
     </>
   );
 }

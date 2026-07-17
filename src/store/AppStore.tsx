@@ -1,4 +1,6 @@
-import React, { createContext, useContext, useState, useCallback, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useCallback, ReactNode, useEffect } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Platform, PermissionsAndroid } from 'react-native';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -86,6 +88,18 @@ export interface Appointment {
   status: 'Pending' | 'Confirmed' | 'Completed' | 'Cancelled';
 }
 
+export interface CustomAlertButton {
+  text: string;
+  style?: 'cancel' | 'destructive' | 'default';
+  onPress?: () => void;
+}
+
+export interface CustomAlertConfig {
+  title: string;
+  message?: string;
+  buttons?: CustomAlertButton[];
+}
+
 // ─── Computed Helpers ─────────────────────────────────────────────────────────
 
 export function getTotalPaid(order: Order): number {
@@ -114,50 +128,6 @@ export function isDueToday(order: Order): boolean {
   return order.deliveryDate === today;
 }
 
-// ─── Seed Data ────────────────────────────────────────────────────────────────
-
-const today = new Date().toISOString().slice(0, 10);
-const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
-const tomorrow = new Date(Date.now() + 86400000).toISOString().slice(0, 10);
-const nextWeek = new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10);
-
-const SEED_CUSTOMERS: Customer[] = [
-  { id: 'c1', displayCode: 'C-0001', name: 'Ramesh Sharma', phone: '9876543210', address: '12 MG Road, Jaipur', gender: 'Male', createdDate: yesterday, isActive: true },
-  { id: 'c2', displayCode: 'C-0002', name: 'Priya Patel', phone: '9123456789', address: '5 Lal Bagh, Bhopal', gender: 'Female', createdDate: yesterday, isActive: true },
-  { id: 'c3', displayCode: 'C-0003', name: 'Suresh Kumar', phone: '9988776655', address: '78 Station Road, Indore', gender: 'Male', createdDate: today, isActive: true },
-];
-
-const SEED_ORDERS: Order[] = [
-  {
-    id: 'o1', orderNumber: 'ORD-2026-0001', customerId: 'c1',
-    orderDate: yesterday, deliveryDate: today, status: 'Ready', priority: 'Normal',
-    items: [{ id: 'oi1', garmentType: 'Shirt', quantity: 2, price: 600, measurements: { Length: '28', Chest: '40', Shoulder: '17' } }],
-    totalAmount: 1200, advancePaid: 500,
-    payments: [{ id: 'p1', orderId: 'o1', amount: 500, date: yesterday, mode: 'Cash' }],
-  },
-  {
-    id: 'o2', orderNumber: 'ORD-2026-0002', customerId: 'c2',
-    orderDate: yesterday, deliveryDate: tomorrow, status: 'Stitching', priority: 'Urgent',
-    items: [{ id: 'oi2', garmentType: 'Blouse', quantity: 1, price: 800, measurements: { Bust: '36', Length: '14' } }],
-    totalAmount: 800, advancePaid: 400,
-    payments: [{ id: 'p2', orderId: 'o2', amount: 400, date: yesterday, mode: 'UPI' }],
-  },
-  {
-    id: 'o3', orderNumber: 'ORD-2026-0003', customerId: 'c3',
-    orderDate: today, deliveryDate: nextWeek, status: 'Measurement Taken', priority: 'Normal',
-    items: [{ id: 'oi3', garmentType: 'Pant', quantity: 1, price: 500, measurements: { Waist: '34', Hip: '40' } }],
-    totalAmount: 500, advancePaid: 0,
-    payments: [],
-  },
-  {
-    id: 'o4', orderNumber: 'ORD-2026-0004', customerId: 'c1',
-    orderDate: yesterday, deliveryDate: yesterday, status: 'Delivered', priority: 'Normal',
-    items: [{ id: 'oi4', garmentType: 'Kurta', quantity: 1, price: 700, measurements: { Length: '42', Chest: '42' } }],
-    totalAmount: 700, advancePaid: 700,
-    payments: [{ id: 'p4', orderId: 'o4', amount: 700, date: yesterday, mode: 'Cash' }],
-  },
-];
-
 // ─── Context ──────────────────────────────────────────────────────────────────
 
 interface AppContextType {
@@ -182,17 +152,34 @@ interface AppContextType {
   appointments: Appointment[];
   addAppointment: (app: Omit<Appointment, 'id' | 'status'>) => Appointment;
   cancelAppointment: (id: string) => void;
+  // Storage & Permissions
+  loading: boolean;
+  storagePermissionGranted: boolean | null;
+  requestStoragePermission: () => Promise<boolean>;
+  // Custom Alert Pop-ups
+  alertConfig: CustomAlertConfig | null;
+  showAlert: (title: string, message?: string, buttons?: CustomAlertButton[]) => void;
+  hideAlert: () => void;
 }
 
 const AppContext = createContext<AppContextType | null>(null);
 
-let customerCounter = SEED_CUSTOMERS.length;
-let orderCounter = SEED_ORDERS.length;
-let paymentCounter = 10;
-
 export function AppProvider({ children }: { children: ReactNode }) {
-  const [customers, setCustomers] = useState<Customer[]>(SEED_CUSTOMERS);
-  const [orders, setOrders] = useState<Order[]>(SEED_ORDERS);
+  const [customers, setCustomers] = useState<Customer[]>([]);
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [appointments, setAppointments] = useState<Appointment[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [storagePermissionGranted, setStoragePermissionGranted] = useState<boolean | null>(null);
+
+  const [alertConfig, setAlertConfig] = useState<CustomAlertConfig | null>(null);
+
+  const showAlert = useCallback((title: string, message?: string, buttons?: CustomAlertButton[]) => {
+    setAlertConfig({ title, message, buttons });
+  }, []);
+
+  const hideAlert = useCallback(() => {
+    setAlertConfig(null);
+  }, []);
 
   // Default Session (initialized as logged out & not onboarded for demo)
   const [userSession, setUserSession] = useState<UserSession>({
@@ -205,23 +192,111 @@ export function AppProvider({ children }: { children: ReactNode }) {
     shopName: '',
   });
 
-  const [appointments, setAppointments] = useState<Appointment[]>([
-    { id: 'ap1', customerId: 'c1', customerName: 'Ramesh Sharma', date: today, timeSlot: '11:00 AM', status: 'Confirmed', notes: 'Fitting session' },
-    { id: 'ap2', customerId: 'c2', customerName: 'Priya Patel', date: today, timeSlot: '03:00 PM', status: 'Pending', notes: 'Take Blouse measurements' },
-    { id: 'ap3', customerId: 'c3', customerName: 'Suresh Kumar', date: tomorrow, timeSlot: '10:00 AM', status: 'Confirmed', notes: 'Pant trial check' },
-  ]);
+  // Load initial data from AsyncStorage
+  useEffect(() => {
+    async function loadData() {
+      try {
+        const storedCustomers = await AsyncStorage.getItem('tailorp_customers');
+        const storedOrders = await AsyncStorage.getItem('tailorp_orders');
+        const storedSession = await AsyncStorage.getItem('tailorp_user_session');
+        const storedAppointments = await AsyncStorage.getItem('tailorp_appointments');
+        const storedPermission = await AsyncStorage.getItem('tailorp_storage_permission');
+
+        if (storedCustomers) {
+          setCustomers(JSON.parse(storedCustomers));
+        }
+        if (storedOrders) {
+          setOrders(JSON.parse(storedOrders));
+        }
+        if (storedSession) {
+          setUserSession(JSON.parse(storedSession));
+        }
+        if (storedAppointments) {
+          setAppointments(JSON.parse(storedAppointments));
+        }
+        if (storedPermission) {
+          setStoragePermissionGranted(JSON.parse(storedPermission));
+        }
+      } catch (e) {
+        console.error('Failed to load data from storage', e);
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadData();
+  }, []);
+
+  // Save data to AsyncStorage when states change (only after loading is complete)
+  useEffect(() => {
+    if (loading) return;
+    AsyncStorage.setItem('tailorp_customers', JSON.stringify(customers)).catch(err => console.error(err));
+  }, [customers, loading]);
+
+  useEffect(() => {
+    if (loading) return;
+    AsyncStorage.setItem('tailorp_orders', JSON.stringify(orders)).catch(err => console.error(err));
+  }, [orders, loading]);
+
+  useEffect(() => {
+    if (loading) return;
+    AsyncStorage.setItem('tailorp_user_session', JSON.stringify(userSession)).catch(err => console.error(err));
+  }, [userSession, loading]);
+
+  useEffect(() => {
+    if (loading) return;
+    AsyncStorage.setItem('tailorp_appointments', JSON.stringify(appointments)).catch(err => console.error(err));
+  }, [appointments, loading]);
+
+  const requestStoragePermission = useCallback(async () => {
+    if (Platform.OS === 'android') {
+      try {
+        const granted = await PermissionsAndroid.request(
+          PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE,
+          {
+            title: 'Storage Permission Required',
+            message: 'TailorP requires storage access to persist your boutique data on this device.',
+            buttonNeutral: 'Ask Me Later',
+            buttonNegative: 'Cancel',
+            buttonPositive: 'OK',
+          }
+        );
+        const isGranted = granted === PermissionsAndroid.RESULTS.GRANTED;
+        setStoragePermissionGranted(isGranted);
+        await AsyncStorage.setItem('tailorp_storage_permission', JSON.stringify(isGranted));
+        return isGranted;
+      } catch (err) {
+        console.warn(err);
+        setStoragePermissionGranted(false);
+        await AsyncStorage.setItem('tailorp_storage_permission', JSON.stringify(false));
+        return false;
+      }
+    } else {
+      // iOS / Web: standard browser / device sandbox storage permissions are implicit.
+      // We will save true to indicate it is granted/consented.
+      setStoragePermissionGranted(true);
+      await AsyncStorage.setItem('tailorp_storage_permission', JSON.stringify(true));
+      return true;
+    }
+  }, []);
 
   const addCustomer = useCallback((c: Omit<Customer, 'id' | 'displayCode' | 'createdDate' | 'isActive'>) => {
-    customerCounter++;
+    const nextNum = customers.length > 0
+      ? Math.max(...customers.map(item => {
+          const num = parseInt(item.displayCode.replace('C-', ''), 10);
+          return isNaN(num) ? 0 : num;
+        })) + 1
+      : 1;
+
     const newCustomer: Customer = {
-      ...c, id: `c${Date.now()}`,
-      displayCode: `C-${String(customerCounter).padStart(4, '0')}`,
+      ...c,
+      id: `c${Date.now()}`,
+      displayCode: `C-${String(nextNum).padStart(4, '0')}`,
       createdDate: new Date().toISOString().slice(0, 10),
       isActive: true,
     };
     setCustomers(prev => [newCustomer, ...prev]);
     return newCustomer;
-  }, []);
+  }, [customers]);
 
   const updateCustomer = useCallback((id: string, updates: Partial<Customer>) => {
     setCustomers(prev => prev.map(c => c.id === id ? { ...c, ...updates } : c));
@@ -232,16 +307,24 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const addOrder = useCallback((o: Omit<Order, 'id' | 'orderNumber' | 'payments'>) => {
-    orderCounter++;
+    const nextNum = orders.length > 0
+      ? Math.max(...orders.map(item => {
+          const parts = item.orderNumber.split('-');
+          const num = parts.length > 2 ? parseInt(parts[2], 10) : 0;
+          return isNaN(num) ? 0 : num;
+        })) + 1
+      : 1;
+
     const year = new Date().getFullYear();
     const newOrder: Order = {
-      ...o, id: `o${Date.now()}`,
-      orderNumber: `ORD-${year}-${String(orderCounter).padStart(4, '0')}`,
+      ...o,
+      id: `o${Date.now()}`,
+      orderNumber: `ORD-${year}-${String(nextNum).padStart(4, '0')}`,
       payments: [],
     };
     setOrders(prev => [newOrder, ...prev]);
     return newOrder;
-  }, []);
+  }, [orders]);
 
   const updateOrder = useCallback((id: string, updates: Partial<Order>) => {
     setOrders(prev => prev.map(o => o.id === id ? { ...o, ...updates } : o));
@@ -256,8 +339,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const addPayment = useCallback((orderId: string, p: Omit<Payment, 'id' | 'orderId'>) => {
-    paymentCounter++;
-    const payment: Payment = { ...p, id: `pay${paymentCounter}`, orderId };
+    const paymentId = `pay-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+    const payment: Payment = { ...p, id: paymentId, orderId };
     setOrders(prev => prev.map(o => o.id === orderId ? { ...o, payments: [...o.payments, payment] } : o));
   }, []);
 
@@ -317,6 +400,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
       addPayment, getCustomerOrders,
       userSession, login, logout, completeOnboarding, updateUserSession,
       appointments, addAppointment, cancelAppointment,
+      loading, storagePermissionGranted, requestStoragePermission,
+      alertConfig, showAlert, hideAlert,
     }}>
       {children}
     </AppContext.Provider>

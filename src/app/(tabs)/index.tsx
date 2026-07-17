@@ -87,8 +87,10 @@ export default function DashboardScreen() {
             onPress={() => router.push('/customer/new')}
             activeOpacity={0.7}
           >
-            <MaterialIcons name="person-add" size={20} color={colors.primary} />
-            <Text style={[s.quickActionTxt, { color: colors.text }]}>New Customer</Text>
+            <View style={[s.quickActionIconBg, { backgroundColor: colors.primary + '10' }]}>
+              <MaterialIcons name="person-add" size={22} color={colors.primary} />
+            </View>
+            <Text style={[s.quickActionTxt, { color: colors.text }]} numberOfLines={2}>New Customer</Text>
           </TouchableOpacity>
           
           <TouchableOpacity
@@ -96,8 +98,10 @@ export default function DashboardScreen() {
             onPress={() => router.push('/order/new')}
             activeOpacity={0.7}
           >
-            <MaterialIcons name="add-shopping-cart" size={20} color={colors.primary} />
-            <Text style={[s.quickActionTxt, { color: colors.text }]}>New Order</Text>
+            <View style={[s.quickActionIconBg, { backgroundColor: colors.primary + '10' }]}>
+              <MaterialIcons name="add-shopping-cart" size={22} color={colors.primary} />
+            </View>
+            <Text style={[s.quickActionTxt, { color: colors.text }]} numberOfLines={2}>New Order</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -105,8 +109,10 @@ export default function DashboardScreen() {
             onPress={() => router.push('/appointments')}
             activeOpacity={0.7}
           >
-            <MaterialIcons name="event" size={20} color={colors.primary} />
-            <Text style={[s.quickActionTxt, { color: colors.text }]}>Trial Booking</Text>
+            <View style={[s.quickActionIconBg, { backgroundColor: colors.primary + '10' }]}>
+              <MaterialIcons name="event" size={22} color={colors.primary} />
+            </View>
+            <Text style={[s.quickActionTxt, { color: colors.text }]} numberOfLines={2}>Trial Booking</Text>
           </TouchableOpacity>
         </View>
 
@@ -341,19 +347,33 @@ const s = StyleSheet.create({
     marginBottom: 24,
   },
   quickActionBtn: {
-    flexDirection: 'row',
+    flexDirection: 'column',
     alignItems: 'center',
-    paddingVertical: 12,
-    paddingHorizontal: 14,
-    borderRadius: 16,
+    paddingVertical: 14,
+    paddingHorizontal: 6,
+    borderRadius: 20,
     borderWidth: 1,
     width: '31%',
     justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.03,
+    shadowRadius: 6,
+    elevation: 2,
+  },
+  quickActionIconBg: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 8,
   },
   quickActionTxt: {
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: '600',
-    marginLeft: 6,
+    textAlign: 'center',
+    lineHeight: 15,
   },
   sectionHeader: {
     flexDirection: 'row',

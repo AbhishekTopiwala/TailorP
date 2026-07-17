@@ -1,4 +1,5 @@
 import React from 'react';
+import { Platform } from 'react-native';
 import { Tabs } from 'expo-router';
 import { Colors } from '@/constants/theme';
 import { MaterialIcons } from '@expo/vector-icons';
@@ -16,8 +17,8 @@ export default function TabLayout() {
           backgroundColor: colors.surface,
           borderTopColor: colors.divider,
           borderTopWidth: 1,
-          height: 64,
-          paddingBottom: 8,
+          height: Platform.OS === 'ios' ? 88 : 68,
+          paddingBottom: Platform.OS === 'ios' ? 30 : 10,
           paddingTop: 8,
           elevation: 8,
           shadowColor: '#000',

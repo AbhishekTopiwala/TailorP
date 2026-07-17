@@ -11,7 +11,7 @@ const TIME_SLOTS = [
   '02:00 PM', '03:00 PM', '04:00 PM', '05:00 PM', '06:00 PM'
 ];
 
-export default function AppointmentsScreen() {
+export default function BookAppointmentScreen() {
   const scheme = useColorScheme();
   const colors = Colors[scheme === 'dark' ? 'dark' : 'light'];
   const { customers, addAppointment, showAlert } = useAppStore();

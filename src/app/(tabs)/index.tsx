@@ -106,7 +106,7 @@ export default function DashboardScreen() {
 
           <TouchableOpacity
             style={[s.quickActionBtn, { backgroundColor: colors.surface, borderColor: colors.border }]}
-            onPress={() => router.push('/appointments')}
+            onPress={() => router.push('/appointments/book')}
             activeOpacity={0.7}
           >
             <View style={[s.quickActionIconBg, { backgroundColor: colors.primary + '10' }]}>

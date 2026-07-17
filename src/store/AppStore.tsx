@@ -152,6 +152,7 @@ interface AppContextType {
   appointments: Appointment[];
   addAppointment: (app: Omit<Appointment, 'id' | 'status'>) => Appointment;
   cancelAppointment: (id: string) => void;
+  deleteAppointment: (id: string) => void;
   // Storage & Permissions
   loading: boolean;
   storagePermissionGranted: boolean | null;
@@ -392,6 +393,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setAppointments(prev => prev.map(a => a.id === id ? { ...a, status: 'Cancelled' } : a));
   }, []);
 
+  const deleteAppointment = useCallback((id: string) => {
+    setAppointments(prev => prev.filter(a => a.id !== id));
+  }, []);
+
   return (
     <AppContext.Provider value={{
       customers, orders,
@@ -399,7 +404,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       addOrder, updateOrder, updateOrderStatus, deleteOrder,
       addPayment, getCustomerOrders,
       userSession, login, logout, completeOnboarding, updateUserSession,
-      appointments, addAppointment, cancelAppointment,
+      appointments, addAppointment, cancelAppointment, deleteAppointment,
       loading, storagePermissionGranted, requestStoragePermission,
       alertConfig, showAlert, hideAlert,
     }}>
